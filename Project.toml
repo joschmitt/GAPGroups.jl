@@ -1,0 +1,13 @@
+name = "GAPGroups"
+uuid = "21fe2a1e-8ea0-11e9-0a1a-b318e3c68493"
+authors = ["Max Horn"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
