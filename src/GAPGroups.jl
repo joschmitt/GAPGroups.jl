@@ -1,5 +1,7 @@
 module GAPGroups
 
-greet() = print("Hello World!")
+using AbstractAlgebra
+
+include("gapperms.jl")
 
 end # module
