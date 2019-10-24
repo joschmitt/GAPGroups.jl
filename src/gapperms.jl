@@ -41,11 +41,9 @@ function Base.setindex!(p::GAPPerm, v::Integer, n::Integer)
 end
 
 gap_header(p::GAPPerm) = reinterpret(UInt64, p.data[1:2])[]
-# gap_type(p::GAPPerm) = UInt8(gap_header(p) << 56 >> 56 )
 gap_flags(p::GAPPerm) = reinterpret(UInt8, p.data[1:1])[2]
 gap_type(p::GAPPerm)  = reinterpret(UInt8, p.data[1:1])[1]
 Generic.degree(p::GAPPerm) = Int(gap_header(p) >> 24)
-
 
 ### Generic stuff below
 
@@ -69,7 +67,7 @@ end
 
 Base.hash(p::GAPPerm, h::UInt) = hash(GAPPerm, hash(view(p, 1, degree(p)), h))
 
-function mul!(out::GAPPerm, p::GAPPerm, q::GAPPerm)
+function Generic.mul!(out::GAPPerm, p::GAPPerm, q::GAPPerm)
     @boundscheck degree(out) >= max(degree(p), degree(q))
     out = (out === p || out === q ? similar(out) : out)
 
@@ -78,8 +76,6 @@ function mul!(out::GAPPerm, p::GAPPerm, q::GAPPerm)
    end
    return out
 end
-
-
 
 function Generic.inv!(out::GAPPerm, p::GAPPerm)
     @boundscheck degree(p) == degree(out)
@@ -98,38 +94,3 @@ function Base.:*(p::GAPPerm, q::GAPPerm)
 end
 
 Base.inv(g::GAPPerm) = @inbounds inv!(similar(g), g)
-
-
-using Random, AbstractAlgebra, Test
-
-@testset "GAPPerms" begin
-
-    let n = 51
-        for _ in 1:100
-
-            p = randperm(n)
-            q = randperm(n)
-            P = GAPPerm(p)
-            Q = GAPPerm(q)
-
-            @test gap_header(P) == gap_header(Q)
-            @test degree(P) == degree(Q) == n
-            @test gap_type(P) == 0x08
-
-            @test collect(P) isa Vector{Int64}
-            @test length(collect(P)) == degree(P)
-
-            @test P*Q isa GAPPerm
-            R = P*Q
-            @test degree(R) == n
-            @test gap_header(R) == gap_header(P)
-
-            aaP = Perm(p)
-            aaQ = Perm(q)
-
-            @test aaP*aaQ == R
-
-            @test inv(P)*P == Perm(n)
-        end
-    end
-end
