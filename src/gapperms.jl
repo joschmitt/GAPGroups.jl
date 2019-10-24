@@ -1,15 +1,13 @@
-function gap_header(type::UInt8, flags::UInt8, size::Int64)
-    @assert size < 2^48
-    ans = UInt64(0)
-    ans += type
-    ans = ans << 8
-    ans += flags
-    ans = ans << 48
-    ans += size
-    return ans
+function gap_header(size::Int64, flags::UInt8=0x00, type::UInt8=0x08)
+    @assert 0 < size < 2^48
+    header = UInt64(0)
+    header += size
+    header = header << 16
+    header += flags
+    header = header << 8
+    header += type
+    return header
 end
-
-gap_header(size::Int64) = gap_header(0x08, 0x00, size)
 
 struct GAPPerm
     mem::Vector{Int64}
