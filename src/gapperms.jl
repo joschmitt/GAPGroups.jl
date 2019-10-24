@@ -10,40 +10,41 @@ function gap_header(size::Int64, flags::UInt8=0x00, type::UInt8=0x08)
 end
 
 struct GAPPerm
-    mem::Vector{Int64}
+    data::Vector{UInt32}
 
-    function GAPPerm(d::Vector{Int})
+    function GAPPerm(d::AbstractVector{<:Integer})
         n = length(d)
-        mem = Vector{Int}(undef, n+2)
-        mem[1] = gap_header(n)
-        mem[2] = C_NULL # void pointer
-        mem[3:end] .= d
-        return new(mem)
+        data = Vector{UInt32}(undef, n+4)
+        data[1:2] = reinterpret(UInt32, [gap_header(n)])
+        data[3:4] = reinterpret(UInt32, [C_NULL]) # void pointer
+        data[5:end] .= convert.(UInt32, d)
+        return new(data)
     end
 
     function GAPPerm(n::Int)
-        mem = Vector{Int64}(undef, n+2)
-        mem[1] = gap_header(n)
-        mem[2] = C_NULL # void pointer
-        mem[3:end] .= 1:n
-        return new(mem)
+        data = Vector{UInt64}(undef, n+4)
+        data[1:2] = reinterpret(UInt32, [gap_header(n)])
+        data[3:4] = reinterpret(UInt32, [C_NULL]) # void pointer
+        data[5:end] .= UInt32(1):UInt32(n)
+        return new(data)
     end
 end
 
 function Base.getindex(p::GAPPerm, n::Integer)
-    @boundscheck n > 0
-    return (n > degree(p) ? n : p.mem[n+2])
+    @boundscheck 0 < n
+    return (n > degree(p) ? Int(n) : Int(p.data[n+4]))
 end
 
 function Base.setindex!(p::GAPPerm, v::Integer, n::Integer)
-    @boundscheck n > 0
-    @boundscheck n <= degree(p)
-    return p.mem[n+2] = v
+    @boundscheck 0 < n <= degree(p)
+    return p.data[n+4] = v
 end
 
-gap_header(p::GAPPerm) = UInt(p.mem[1])
-gap_type(p::GAPPerm) = UInt8(gap_header(p) >> 56)
-degree(p::GAPPerm) = Int(gap_header(p) << 16 >> 16)
+gap_header(p::GAPPerm) = reinterpret(UInt64, p.data[1:2])[]
+# gap_type(p::GAPPerm) = UInt8(gap_header(p) << 56 >> 56 )
+gap_flags(p::GAPPerm) = reinterpret(UInt8, p.data[1:1])[2]
+gap_type(p::GAPPerm)  = reinterpret(UInt8, p.data[1:1])[1]
+Generic.degree(p::GAPPerm) = Int(gap_header(p) >> 24)
 
 
 ### Generic stuff below
