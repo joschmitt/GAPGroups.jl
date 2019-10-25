@@ -13,31 +13,44 @@ using Test
         n = 129
         p = randperm(n)
         q = randperm(n)
-        P = GAPPerm(p)
-        Q = GAPPerm(q)
+        P = GAPPerm{UInt32}(p)
+        Q = GAPPerm{UInt16}(q)
         aaP = Perm(p)
         aaQ = Perm(q)
 
         @testset "gap_header" begin
             import GAPGroups: gap_header, gap_flags, gap_type
 
-            (deg, fl, tp) = (2^32+2, UInt8(9), UInt8(1))
+            @test gap_header(P) == 0x0000000000810008
+            @test degree(P) == 129
+            @test gap_flags(P) == 0x00
+            @test gap_type(P) == 0x08
+
+            @test gap_header(Q) == 0x0000008100000007
+            @test degree(Q) == 129
+            @test gap_flags(Q) == 0x00
+            @test gap_type(Q) == 0x07
+
+            for p in [P, Q]
+                R = similar(p)
+                @test degree(R) == degree(p)
+                @test gap_flags(R) == gap_flags(p)
+                @test gap_type(R) == gap_type(p)
+                @test gap_header(R) == gap_header(p)
+            end
+
+            (deg, fl, tp) = (UInt32(2^30+2), UInt8(9), UInt8(1))
             gh = gap_header(deg, fl, tp)
-            tmp = similar(Q);
+            tmp = similar(P);
             tmp.data[1:2] .= reinterpret(UInt32, [gh])
 
             @test degree(tmp) == deg
             @test gap_flags(tmp) == fl
             @test gap_type(tmp) == tp
-
-            @test gap_header(P) == gap_header(Q)
-            @test degree(P) == degree(Q) == n
-            @test gap_type(P) == 0x08
-            @test gap_flags(P) == 0x00
         end
 
         @testset "GAPperms operations" begin
-            @test collect(P) isa Vector{Int64}
+            @test collect(P) isa Vector{Int}
             @test length(collect(P)) == degree(P)
 
             @test P*Q isa GAPPerm
@@ -48,7 +61,7 @@ using Test
             @test aaP*aaQ == R
             @test inv(P)*P == GAPPerm(n)
 
-            S = GAPPerm(randperm(100))
+            S = GAPPerm{UInt32}(randperm(100))
             @test P*S isa GAPPerm
             @test S*P isa GAPPerm
 
