@@ -1,19 +1,3 @@
-function gap_header(size::T, flags::UInt8=0x00, type::UInt8=(sizeof(T) == 4 ? 0x08 : 0x07)) where T<:Union{UInt16, UInt32}
-    # size must be less than typemax(UInt32)
-    header = UInt64(0)
-    header += size
-    header = header << (sizeof(T) == 4 ? 0 : 16) # alignment to 32bit boundary
-    header = header << 8
-    header += flags
-    header = header << 8
-    header += type
-    return header
-end
-
-gaph_s(::Type{T}) where T = sizeof(UInt64) ÷ sizeof(T) # 2 or 4
-ptr_s(::Type{T}) where T = sizeof(Ptr) ÷ sizeof(T) # 2 or 4
-data_offset(::Type{GAPPerm{T}}) where T = gaph_s(T) + ptr_s(T)
-
 struct GAPPerm{T<:Union{UInt16, UInt32}}
     data::Vector{T}
 
@@ -43,6 +27,22 @@ end
 
 GAPPerm(n::Integer) = GAPPerm{UInt32}(n)
 GAPPerm(d::AbstractVector{<:Integer}) = GAPPerm{UInt32}(d)
+
+function gap_header(size::T, flags::UInt8=0x00, type::UInt8=(sizeof(T) == 4 ? 0x08 : 0x07)) where T<:Union{UInt16, UInt32}
+    # size must be less than typemax(UInt32)
+    header = UInt64(0)
+    header += size
+    header = header << (sizeof(T) == 4 ? 0 : 16) # alignment to 32bit boundary
+    header = header << 8
+    header += flags
+    header = header << 8
+    header += type
+    return header
+end
+
+gaph_s(::Type{T}) where T = sizeof(UInt64) ÷ sizeof(T) # 2 or 4
+ptr_s(::Type{T}) where T = sizeof(Ptr) ÷ sizeof(T) # 2 or 4
+data_offset(::Type{GAPPerm{T}}) where T = gaph_s(T) + ptr_s(T)
 
 function Base.getindex(p::T, n::Integer) where T<:GAPPerm
     @boundscheck 0 < n
