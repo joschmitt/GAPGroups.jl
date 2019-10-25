@@ -41,7 +41,9 @@ struct GAPPerm{T<:Union{UInt16, UInt32}}
     end
 end
 
-function Base.getindex(p::GAPPerm, n::Integer)
+GAPPerm(n::Integer) = GAPPerm{UInt32}(n)
+GAPPerm(d::AbstractVector{<:Integer}) = GAPPerm{UInt32}(d)
+
 function Base.getindex(p::T, n::Integer) where T<:GAPPerm
     @boundscheck 0 < n
     return (n > degree(p) ? Int(n) : Int(p.data[n+data_offset(T)]))
@@ -108,7 +110,7 @@ function Generic.inv!(out::GAPPerm, p::GAPPerm)
 end
 
 function Base.:*(p::GAPPerm, q::GAPPerm)
-    out = (degree(p) > degree(q) ? similar(p) : similar(q))
+    out = (degree(p) >= degree(q) ? similar(p) : similar(q))
     @inbounds out = mul!(out, p, q)
     return out
 end
