@@ -1,32 +1,29 @@
 struct GAPPerm{T<:Union{UInt16, UInt32}}
     data::Vector{T}
 
-    function GAPPerm{T}(n::Integer) where T<:Union{UInt16, UInt32}
-        @assert 0 < n <= typemax(T)
-        data = Vector{T}(undef, n + gaph_s(T) + ptr_s(T))
-        data[1 : gaph_s(T)] = reinterpret(T, [gap_header(T(n))])
-        data[1+gaph_s(T) : gaph_s(T)+ptr_s(T)] = reinterpret(T, [C_NULL]) # void pointer
-        data[1+data_offset(GAPPerm{T}):end] .= T(1):T(n)
-
-        return new{T}(data)
-    end
-
-    function GAPPerm{T}(d::AbstractVector{<:Integer}) where T<:Union{UInt16, UInt32}
-        n = length(d)
+    function GAPPerm{T}(itr) where T<:Union{UInt16, UInt32}
+        @boundscheck !(itr isa Integer) || throw(ArgumentError("Pass range 1:$itr to the GAPPerm{T} constructor."))
+        n = length(itr)
 
         @assert 0 < n <= typemax(T)
-        data = Vector{T}(undef, n + gaph_s(T) + ptr_s(T))
-        data[1 : gaph_s(T)] = reinterpret(T, [gap_header(T(n))])
-        data[1+gaph_s(T) : gaph_s(T)+ptr_s(T)] = reinterpret(T, [C_NULL]) # void pointer
+        gaph_s = div(sizeof(UInt64), sizeof(T)) # 2 or 4
+        ptr_s = div(sizeof(Ptr), sizeof(T)) # 2 or 4
+        # size of GAPPerm data in bytes, including the pointer to inverse perm:
+        size = T(n * sizeof(T) + sizeof(Ptr))
 
-        data[1+data_offset(GAPPerm{T}):end] .= d
+        data = Vector{T}(undef, n + gaph_s + ptr_s)
+        data[1 : gaph_s] = reinterpret(T, [perm_header(size)])
+        data[1+gaph_s : gaph_s+ptr_s] = reinterpret(T, [C_NULL]) # void pointer
+
+        data[1+data_offset(GAPPerm{T}):end] .= itr
 
         return new(data)
     end
 end
 
-GAPPerm(n::Integer) = GAPPerm{UInt32}(n)
-GAPPerm(d::AbstractVector{<:Integer}) = GAPPerm{UInt32}(d)
+GAPPerm(itr) = GAPPerm{UInt32}(itr)
+GAPPerm(n::Integer) = GAPPerm{UInt32}(1:n)
+
 function gap_header(size::Integer, flags::UInt8, type::UInt8)
     @assert 0 <= size <= 2^48
     return (UInt64(size)<<16) | (UInt64(flags) << 8) | UInt64(type)
@@ -35,9 +32,7 @@ end
 perm_header(size_inbytes::T) where T<:Union{UInt16, UInt32} =
     gap_header(size_inbytes, 0x00, (sizeof(T) == 4 ? 0x08 : 0x07))
 
-gaph_s(::Type{T}) where T = sizeof(UInt64) ÷ sizeof(T) # 2 or 4
-ptr_s(::Type{T}) where T = sizeof(Ptr) ÷ sizeof(T) # 2 or 4
-data_offset(::Type{GAPPerm{T}}) where T = gaph_s(T) + ptr_s(T)
+data_offset(::Type{GAPPerm{T}}) where T = div(sizeof(UInt64) + sizeof(Ptr), sizeof(T))
 
 function Base.getindex(p::T, n::Integer) where T<:GAPPerm
     @boundscheck 0 < n
