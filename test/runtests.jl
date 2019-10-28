@@ -19,14 +19,16 @@ using Test
         aaQ = Perm(q)
 
         @testset "gap_header" begin
-            import GAPGroups: gap_header, gap_flags, gap_type
+            import GAPGroups: gap_header, gap_flags, gap_type, gap_size
 
-            @test gap_header(P) == 0x0000000000810008
+            @test gap_header(P) ==  0x00000000020c0008
+            @test gap_size(P) == UInt(129*sizeof(UInt32) + sizeof(Ptr))
             @test degree(P) == 129
             @test gap_flags(P) == 0x00
             @test gap_type(P) == 0x08
 
-            @test gap_header(Q) == 0x0000008100000007
+            @test gap_header(Q) == 0x00000000010a0007
+            @test gap_size(Q) == UInt(129*sizeof(UInt16) + sizeof(Ptr))
             @test degree(Q) == 129
             @test gap_flags(Q) == 0x00
             @test gap_type(Q) == 0x07
@@ -39,12 +41,14 @@ using Test
                 @test gap_header(R) == gap_header(p)
             end
 
-            (deg, fl, tp) = (UInt32(2^30+2), UInt8(9), UInt8(1))
+            s = 2^32
+
+            (deg, fl, tp) = (UInt(4*s+8), UInt8(9), UInt8(1))
             gh = gap_header(deg, fl, tp)
             tmp = similar(P);
             tmp.data[1:2] .= reinterpret(UInt32, [gh])
 
-            @test degree(tmp) == deg
+            @test degree(tmp) == s
             @test gap_flags(tmp) == fl
             @test gap_type(tmp) == tp
         end
