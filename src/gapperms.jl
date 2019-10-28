@@ -34,12 +34,12 @@ perm_header(size_inbytes::T) where T<:Union{UInt16, UInt32} =
 
 data_offset(::Type{GAPPerm{T}}) where T = div(sizeof(UInt64) + sizeof(Ptr), sizeof(T))
 
-function Base.getindex(p::T, n::Integer) where T<:GAPPerm
+Base.@propagate_inbounds function Base.getindex(p::T, n::Integer) where T<:GAPPerm
     @boundscheck 0 < n
     return (n > degree(p) ? Int(n) : Int(p.data[n+data_offset(T)]))
 end
 
-function Base.setindex!(p::T, v::Integer, n::Integer) where T<:GAPPerm
+Base.@propagate_inbounds function Base.setindex!(p::T, v::Integer, n::Integer) where T<:GAPPerm
     @boundscheck 0 < n <= degree(p)
     return p.data[n+data_offset(T)] = v
 end
@@ -64,9 +64,9 @@ Base.size(p::GAPPerm) = (degree(p),)
 
 Base.similar(p::GAPPerm{T}) where T = GAPPerm{T}(1:degree(p))
 
-function Base.:(==)(p::GAPPerm, q::GAPPerm)
+Base.@propagate_inbounds function Base.:(==)(p::GAPPerm, q::GAPPerm)
     last_idx = max(degree(p), degree(q))
-    for i in 1:last_idx
+    @inbounds for i in 1:last_idx
         p[i] == q[i] || return false
     end
     return true
@@ -74,7 +74,7 @@ end
 
 Base.hash(p::GAPPerm, h::UInt) = hash(GAPPerm, hash(view(p, 1, degree(p)), h))
 
-function Generic.mul!(out::GAPPerm, p::GAPPerm, q::GAPPerm)
+Base.@propagate_inbounds function Generic.mul!(out::GAPPerm, p::GAPPerm, q::GAPPerm)
     @boundscheck degree(out) >= max(degree(p), degree(q))
     out = (out === p || out === q ? similar(out) : out)
 
@@ -84,7 +84,7 @@ function Generic.mul!(out::GAPPerm, p::GAPPerm, q::GAPPerm)
    return out
 end
 
-function Generic.inv!(out::GAPPerm, p::GAPPerm)
+Base.@propagate_inbounds function Generic.inv!(out::GAPPerm, p::GAPPerm)
     @boundscheck degree(p) == degree(out)
     out = (out === p ? similar(out) : out)
 
@@ -94,10 +94,10 @@ function Generic.inv!(out::GAPPerm, p::GAPPerm)
    return out
 end
 
-function Base.:*(p::GAPPerm, q::GAPPerm)
+Base.@propagate_inbounds function Base.:*(p::GAPPerm, q::GAPPerm)
     out = (degree(p) >= degree(q) ? similar(p) : similar(q))
     @inbounds out = mul!(out, p, q)
     return out
 end
 
-Base.inv(g::GAPPerm) = @inbounds inv!(similar(g), g)
+Base.@propagate_inbounds Base.inv(g::GAPPerm) = @inbounds inv!(similar(g), g)
