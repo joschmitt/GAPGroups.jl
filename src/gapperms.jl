@@ -27,18 +27,13 @@ end
 
 GAPPerm(n::Integer) = GAPPerm{UInt32}(n)
 GAPPerm(d::AbstractVector{<:Integer}) = GAPPerm{UInt32}(d)
-
-function gap_header(size::T, flags::UInt8=0x00, type::UInt8=(sizeof(T) == 4 ? 0x08 : 0x07)) where T<:Union{UInt16, UInt32}
-    # size must be less than typemax(UInt32)
-    header = UInt64(0)
-    header += size
-    header = header << (sizeof(T) == 4 ? 0 : 16) # alignment to 32bit boundary
-    header = header << 8
-    header += flags
-    header = header << 8
-    header += type
-    return header
+function gap_header(size::Integer, flags::UInt8, type::UInt8)
+    @assert 0 <= size <= 2^48
+    return (UInt64(size)<<16) | (UInt64(flags) << 8) | UInt64(type)
 end
+
+perm_header(size_inbytes::T) where T<:Union{UInt16, UInt32} =
+    gap_header(size_inbytes, 0x00, (sizeof(T) == 4 ? 0x08 : 0x07))
 
 gaph_s(::Type{T}) where T = sizeof(UInt64) ÷ sizeof(T) # 2 or 4
 ptr_s(::Type{T}) where T = sizeof(Ptr) ÷ sizeof(T) # 2 or 4
@@ -54,9 +49,9 @@ function Base.setindex!(p::T, v::Integer, n::Integer) where T<:GAPPerm
     return p.data[n+data_offset(T)] = v
 end
 
-function gap_header(p::T) where T<:GAPPerm
-    k = data_offset(T) ÷ 2
-    reinterpret(UInt64, p.data[1: k])[]
+function gap_header(p::GAPPerm{T}) where T
+    gaph_s = div(sizeof(UInt64), sizeof(T))
+    return reinterpret(UInt64, view(p.data, 1:gaph_s))[1]
 end
 
 gap_flags(p::GAPPerm) = reinterpret(UInt8, p.data[1:1])[2]
