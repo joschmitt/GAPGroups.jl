@@ -49,13 +49,11 @@ function gap_header(p::GAPPerm{T}) where T
     return reinterpret(UInt64, view(p.data, 1:gaph_s))[1]
 end
 
-gap_flags(p::GAPPerm) = reinterpret(UInt8, p.data[1:1])[2]
-gap_type(p::GAPPerm)  = reinterpret(UInt8, p.data[1:1])[1]
+gap_flags(p::GAPPerm) = reinterpret(UInt8, view(p.data, 1:1))[2]
+gap_type(p::GAPPerm)  = reinterpret(UInt8, view(p.data, 1:1))[1]
+gap_size(p::GAPPerm) = gap_header(p) >> 16
 
-function Generic.degree(p::GAPPerm{T}) where T
-    shift = sizeof(T) == 4 ? 16 : 32
-    return Int(gap_header(p) >> shift)
-end
+Generic.degree(p::GAPPerm{T}) where T = Int(div(gap_size(p) - sizeof(Ptr), sizeof(T)))
 
 ### Generic stuff below
 
@@ -64,10 +62,7 @@ Base.eltype(::Type{<:GAPPerm}) = Int64
 Base.length(p::GAPPerm) = degree(p)
 Base.size(p::GAPPerm) = (degree(p),)
 
-Base.similar(p::GAPPerm{T}) where T = GAPPerm{T}(degree(p))
-
-Base.firstindex(p::GAPPerm) = 1
-Base.lastindex(p::GAPPerm) = degree(p)
+Base.similar(p::GAPPerm{T}) where T = GAPPerm{T}(1:degree(p))
 
 function Base.:(==)(p::GAPPerm, q::GAPPerm)
     last_idx = max(degree(p), degree(q))
