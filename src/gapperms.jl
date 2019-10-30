@@ -76,7 +76,7 @@ Base.hash(p::GAPPerm, h::UInt) = hash(GAPPerm, hash(view(p, 1, degree(p)), h))
 
 Base.@propagate_inbounds function Generic.mul!(out::GAPPerm, p::GAPPerm, q::GAPPerm)
     @boundscheck degree(out) >= max(degree(p), degree(q))
-    out = (out === p || out === q ? similar(out) : out)
+    out = (out === q ? similar(out) : out)
 
     @inbounds for i in 1:degree(out)
       out[i] = q[p[i]]
