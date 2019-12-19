@@ -38,5 +38,3 @@ function *(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
    t=y.X
    return s*t
 end
-
-#add comment
