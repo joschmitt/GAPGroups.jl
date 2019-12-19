@@ -1,3 +1,4 @@
+import Base.*
 module PermModule
 
 using GAP
@@ -10,17 +11,7 @@ struct GAPGroup
 end
 
 struct GAPGroupElem
-   x::Tg
-end
-
-function MyOrder(x::GAPGroup)
-   return GAP.Globals.Size(x.X)
-end
-
-function MyRandom(x::GAPGroup)
-   s=GAP.Globals.Random(x.X)
-   y=GAPGroupElem(s)
-   return y
+   X::Tg
 end
 
 end
@@ -34,9 +25,16 @@ function symmetric_group(n::Int64)
 end
 
 function order(x::PermModule.GAPGroup)
-   return PermModule.MyOrder(x)
+   return GAP.Globals.Size(x.X)
 end
 
-function random(x::PermModule.GAPGroup)
-   return PermModule.MyRandom(x)
+function rand(x::PermModule.GAPGroup)
+   s=GAP.Globals.Random(x.X)
+   return PermModule.GAPGroupElem(s)
+end
+
+function *(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+   s=x.X
+   t=y.X
+   return s*t
 end
