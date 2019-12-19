@@ -34,7 +34,5 @@ function rand(x::PermModule.GAPGroup)
 end
 
 function *(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
-   s=x.X
-   t=y.X
-   return PermModule.GAPGroupElem(s*t)
+   return PermModule.GAPGroupElem(x.X * y*X)
 end
