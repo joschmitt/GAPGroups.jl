@@ -3,6 +3,9 @@ uuid = "21fe2a1e-8ea0-11e9-0a1a-b318e3c68493"
 authors = ["Max Horn"]
 version = "0.1.0"
 
+[deps]
+GAP = "c863536a-3901-11e9-33e7-d5cd0df7b904"
+
 [compat]
 julia = "1"
 
