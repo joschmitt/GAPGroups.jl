@@ -36,3 +36,8 @@ end
 function *(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
    return PermModule.GAPGroupElem(x.X * y.X)
 end
+
+function perm(L::Array{Int64,1})
+   z=GAP.Globals.CycleFromList(GAP.julia_to_gap(L))
+   return PermModule.GAPGroupElem(z)
+end
