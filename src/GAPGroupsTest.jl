@@ -13,4 +13,4 @@ y=rand(G)
 ox=order(x)
 oy=order(y)
 
-(x^y).X == (y^(oy-1)*x*y).X
+(x^y).X == (y^-1*x*y).X
