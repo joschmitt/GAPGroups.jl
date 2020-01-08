@@ -1,9 +1,10 @@
 using GAP
 import Base.*
 import Base.^
-module PermModule
+import Base.inv
 
-export symmetric_group, MyRandom
+
+module PermModule
 
 Tg=Main.ForeignGAP.MPtr
 
@@ -16,6 +17,7 @@ struct GAPGroupElem
 end
 
 end
+
 
 function symmetric_group(n::Int64)
    if n<1
@@ -50,14 +52,16 @@ function identity(x::PermModule.GAPGroup)
    return PermModule.GAPGroupElem(GAP.Globals.Identity(x.X))
 end
 
+function inv(x::PermModule.GAPGroupElem)
+   return PermModule.GAPGroupElem(GAP.Globals.Inverse(x.X))
+end
+
 function ^(x::PermModule.GAPGroupElem, y::Int64)
    if y<0
-      ordx = order(x)
-      while y<0
-         y+=ordx
-      end
+      return PermModule.GAPGroupElem(inv(x).X^(-y))
+   else
+      return PermModule.GAPGroupElem(x.X ^ y)
    end
-   return PermModule.GAPGroupElem(x.X ^ y)
 end
 
 function perm(L::Array{Int64,1})
