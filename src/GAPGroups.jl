@@ -2,7 +2,7 @@ using GAP
 import Base.*
 import Base.^
 import Base.inv
-
+import Base.==
 
 module PermModule
 
@@ -44,8 +44,8 @@ function *(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
    return PermModule.GAPGroupElem(x.X * y.X)
 end
 
-function ^(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
-   return PermModule.GAPGroupElem(x.X ^ y.X)
+function ==(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+   return x.X == y.X
 end
 
 function identity(x::PermModule.GAPGroup)
@@ -55,6 +55,7 @@ end
 function inv(x::PermModule.GAPGroupElem)
    return PermModule.GAPGroupElem(GAP.Globals.Inverse(x.X))
 end
+
 
 function ^(x::PermModule.GAPGroupElem, y::Int64)
    if y<0
