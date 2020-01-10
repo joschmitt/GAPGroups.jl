@@ -3,6 +3,10 @@ import Base.*
 import Base.^
 import Base.inv
 import Base.==
+import Base.hash
+import Base.<
+import Base.>
+import Base.isless
 
 module PermModule
 
@@ -25,6 +29,11 @@ function symmetric_group(n::Int64)
    else
       return PermModule.GAPGroup(GAP.Globals.SymmetricGroup(n))
    end
+end
+
+# to be fixed later
+function hash(x::PermModule.GAPGroupElem)
+   return 0
 end
 
 function order(x::PermModule.GAPGroup)
@@ -58,14 +67,26 @@ end
 
 
 function ^(x::PermModule.GAPGroupElem, y::Int64)
-   if y<0
-      return PermModule.GAPGroupElem(inv(x).X^(-y))
-   else
-      return PermModule.GAPGroupElem(x.X ^ y)
-   end
+   return PermModule.GAPGroupElem(x.X ^ y)
+end
+
+function ^(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+   return PermModule.GAPGroupElem(x.X ^ y.X)
+end
+
+function <(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+   return x.X < y.X
+end
+
+function >(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+   return x.X > y.X
 end
 
 function perm(L::Array{Int64,1})
    z=GAP.Globals.CycleFromList(GAP.julia_to_gap(L))
    return PermModule.GAPGroupElem(z)
+end
+
+function isless(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+   return x<y
 end
