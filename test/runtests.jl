@@ -1,4 +1,3 @@
-using GAPGroups
 using Test
 
 #to be modified once defined the new type
