@@ -7,8 +7,9 @@ import Base.hash
 import Base.<
 import Base.>
 import Base.isless
+# export symmetric_group, hash, order, rand, *, ==, identity, inv, ^, >, <, perm
 
-module PermModule
+module GAPGroups
 
 Tg=Main.ForeignGAP.MPtr
 
@@ -27,66 +28,66 @@ function symmetric_group(n::Int64)
    if n<1
      throw(ArgumentError("it must be a positive integer"))
    else
-      return PermModule.GAPGroup(GAP.Globals.SymmetricGroup(n))
+      return GAPGroups.GAPGroup(GAP.Globals.SymmetricGroup(n))
    end
 end
 
 # to be fixed later
-function hash(x::PermModule.GAPGroupElem)
+function hash(x::GAPGroups.GAPGroupElem)
    return 0
 end
 
-function order(x::PermModule.GAPGroup)
+function order(x::GAPGroups.GAPGroup)
    return GAP.Globals.Size(x.X)
 end
 
-function order(x::PermModule.GAPGroupElem)
+function order(x::GAPGroups.GAPGroupElem)
    return GAP.Globals.Order(x.X)
 end
 
-function rand(x::PermModule.GAPGroup)
+function rand(x::GAPGroups.GAPGroup)
    s=GAP.Globals.Random(x.X)
-   return PermModule.GAPGroupElem(s)
+   return GAPGroups.GAPGroupElem(s)
 end
 
-function *(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
-   return PermModule.GAPGroupElem(x.X * y.X)
+function *(x::GAPGroups.GAPGroupElem, y::GAPGroups.GAPGroupElem)
+   return GAPGroups.GAPGroupElem(x.X * y.X)
 end
 
-function ==(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+function ==(x::GAPGroups.GAPGroupElem, y::GAPGroups.GAPGroupElem)
    return x.X == y.X
 end
 
-function identity(x::PermModule.GAPGroup)
-   return PermModule.GAPGroupElem(GAP.Globals.Identity(x.X))
+function identity(x::GAPGroups.GAPGroup)
+   return GAPGroups.GAPGroupElem(GAP.Globals.Identity(x.X))
 end
 
-function inv(x::PermModule.GAPGroupElem)
-   return PermModule.GAPGroupElem(GAP.Globals.Inverse(x.X))
+function inv(x::GAPGroups.GAPGroupElem)
+   return GAPGroups.GAPGroupElem(GAP.Globals.Inverse(x.X))
 end
 
 
-function ^(x::PermModule.GAPGroupElem, y::Int64)
-   return PermModule.GAPGroupElem(x.X ^ y)
+function ^(x::GAPGroups.GAPGroupElem, y::Int64)
+   return GAPGroups.GAPGroupElem(x.X ^ y)
 end
 
-function ^(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
-   return PermModule.GAPGroupElem(x.X ^ y.X)
+function ^(x::GAPGroups.GAPGroupElem, y::GAPGroups.GAPGroupElem)
+   return GAPGroups.GAPGroupElem(x.X ^ y.X)
 end
 
-function <(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+function <(x::GAPGroups.GAPGroupElem, y::GAPGroups.GAPGroupElem)
    return x.X < y.X
 end
 
-function >(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+function >(x::GAPGroups.GAPGroupElem, y::GAPGroups.GAPGroupElem)
    return x.X > y.X
 end
 
 function perm(L::Array{Int64,1})
    z=GAP.Globals.CycleFromList(GAP.julia_to_gap(L))
-   return PermModule.GAPGroupElem(z)
+   return GAPGroups.GAPGroupElem(z)
 end
 
-function isless(x::PermModule.GAPGroupElem, y::PermModule.GAPGroupElem)
+function isless(x::GAPGroups.GAPGroupElem, y::GAPGroups.GAPGroupElem)
    return x<y
 end
