@@ -11,9 +11,10 @@ import Base.hash
 import Base.<
 import Base.>
 import Base.isless
-# export symmetric_group, hash, order, rand, *, ==, identity, inv, ^, >, <, perm
+import Base.one
+import Base.rand
 
-export symmetric_group, order
+export symmetric_group, order, perm
 
 struct GAPGroup
    X::GapObj
@@ -57,7 +58,7 @@ function ==(x::GAPGroupElem, y::GAPGroupElem)
    return x.X == y.X
 end
 
-function identity(x::GAPGroup)
+function one(x::GAPGroup)
    return GAPGroupElem(GAP.Globals.Identity(x.X))
 end
 
