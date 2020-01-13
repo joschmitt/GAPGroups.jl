@@ -5,9 +5,11 @@ version = "0.1.0"
 
 [deps]
 GAP = "c863536a-3901-11e9-33e7-d5cd0df7b904"
+GAPTypes = "cd4130c4-8d21-11e9-2a29-61e008680c2d"
 
 [compat]
 julia = "1"
+GAPTypes = "1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

@@ -4,7 +4,6 @@ using Test
 #to be modified once defined the new type
 GG=GAPGroups.GAPGroup
 GGE=GAPGroups.GAPGroupElem
-include("GAPGroups.jl")
 
 @testset "GAPGroups.jl" begin
 
