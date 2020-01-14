@@ -83,16 +83,16 @@ function >(x::GAPGroupElem, y::GAPGroupElem)
    return x.X > y.X
 end
 
-function perm(L::Array{Int64,1})
-   z=GAP.Globals.CycleFromList(GAP.julia_to_gap(L))
-   return GAPGroupElem(z)
-end
+#function perm(L::Array{Int64,1})
+#   z=GAP.Globals.CycleFromList(GAP.julia_to_gap(L))
+#   return GAPGroupElem(z)
+#end
 
-function perm2(L::Array{Int64,1}...)
+function perm(L::Array{Int64,1}...)
    if length(L)==0
       return one(symmetric_group(1))
    else
-      return prod([perm(y) for y in L])
+      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(y))) for y in L])
    end
 end
 
