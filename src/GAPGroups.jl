@@ -88,6 +88,14 @@ function perm(L::Array{Int64,1})
    return GAPGroupElem(z)
 end
 
+function perm2(L::Array{Int64,1}...)
+   if length(L)==0
+      return one(symmetric_group(1))
+   else
+      return prod([perm(y) for y in L])
+   end
+end
+
 function isless(x::GAPGroupElem, y::GAPGroupElem)
    return x<y
 end
