@@ -83,11 +83,7 @@ function >(x::GAPGroupElem, y::GAPGroupElem)
    return x.X > y.X
 end
 
-#function perm(L::Array{Int64,1})
-#   z=GAP.Globals.CycleFromList(GAP.julia_to_gap(L))
-#   return GAPGroupElem(z)
-#end
-
+# takes as input a list of arrays (not necessarly disjoint)
 function perm(L::Array{Int64,1}...)
    if length(L)==0
       return one(symmetric_group(1))
@@ -98,6 +94,11 @@ end
 
 function isless(x::GAPGroupElem, y::GAPGroupElem)
    return x<y
+end
+
+#evaluation function
+function (x::GAPGroupElem)(n)
+   return GAP.Globals.OnPoints(n,x.X)
 end
 
 end
