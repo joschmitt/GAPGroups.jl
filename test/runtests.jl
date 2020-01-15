@@ -27,6 +27,8 @@ end
 
    @test x isa GGE
    @test ox isa Int64
+   @test sign(w)==(-1)^(i-2)
+   @test sign(x*y)==sign(x)*sign(y)
    @test (x*y).X == x.X*y.X
    @test x^2 == x*x
    @test x*one(G)==x
