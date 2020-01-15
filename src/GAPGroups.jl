@@ -13,6 +13,7 @@ import Base.>
 import Base.isless
 import Base.one
 import Base.rand
+import Base.sign
 
 export symmetric_group, order, perm
 
@@ -90,6 +91,10 @@ function perm(L::Array{Int64,1}...)
    else
       return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(y))) for y in L])
    end
+end
+
+function sign(x::GAPGroupElem)
+   return GAP.Globals.SignPerm(x.X)
 end
 
 function isless(x::GAPGroupElem, y::GAPGroupElem)
