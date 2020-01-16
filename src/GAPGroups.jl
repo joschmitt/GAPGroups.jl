@@ -3,17 +3,8 @@ module GAPGroups
 using GAP
 using GAPTypes
 
-import Base.*
-import Base.^
-import Base.inv
 import Base.==
-import Base.hash
-import Base.<
-import Base.>
-import Base.isless
-import Base.one
 import Base.rand
-import Base.sign
 
 export symmetric_group, order, perm
 
@@ -34,9 +25,7 @@ function symmetric_group(n::Int64)
 end
 
 # to be fixed later
-function hash(x::GAPGroupElem)
-   return 0
-end
+Base.:hash(x::GAPGroupElem) = 0
 
 function order(x::GAPGroup)
    return GAP.Globals.Size(x.X)
@@ -51,38 +40,23 @@ function rand(x::GAPGroup)
    return GAPGroupElem(s)
 end
 
-function *(x::GAPGroupElem, y::GAPGroupElem)
-   return GAPGroupElem(x.X * y.X)
-end
+Base.:*(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X * y.X)
 
 function ==(x::GAPGroupElem, y::GAPGroupElem)
    return x.X == y.X
 end
 
-function one(x::GAPGroup)
-   return GAPGroupElem(GAP.Globals.Identity(x.X))
-end
+Base.:one(x::GAPGroup) = GAPGroupElem(GAP.Globals.Identity(x.X))
 
-function inv(x::GAPGroupElem)
-   return GAPGroupElem(GAP.Globals.Inverse(x.X))
-end
+Base.:inv(x::GAPGroupElem) = GAPGroupElem(GAP.Globals.Inverse(x.X))
 
+Base.:^(x::GAPGroupElem, y::Int64) = GAPGroupElem(x.X ^ y)
 
-function ^(x::GAPGroupElem, y::Int64)
-   return GAPGroupElem(x.X ^ y)
-end
+Base.:^(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X ^ y.X)
 
-function ^(x::GAPGroupElem, y::GAPGroupElem)
-   return GAPGroupElem(x.X ^ y.X)
-end
+Base.:<(x::GAPGroupElem, y::GAPGroupElem) = x.X < y.X
 
-function <(x::GAPGroupElem, y::GAPGroupElem)
-   return x.X < y.X
-end
-
-function >(x::GAPGroupElem, y::GAPGroupElem)
-   return x.X > y.X
-end
+Base.:>(x::GAPGroupElem, y::GAPGroupElem) = x.X > y.X
 
 # takes as input a list of arrays (not necessarly disjoint)
 function perm(L::Array{Int64,1}...)
@@ -93,13 +67,9 @@ function perm(L::Array{Int64,1}...)
    end
 end
 
-function sign(x::GAPGroupElem)
-   return GAP.Globals.SignPerm(x.X)
-end
+Base.:sign(x::GAPGroupElem) = GAP.Globals.SignPerm(x.X)
 
-function isless(x::GAPGroupElem, y::GAPGroupElem)
-   return x<y
-end
+Base.:isless(x::GAPGroupElem, y::GAPGroupElem) = x<y
 
 #evaluation function
 function (x::GAPGroupElem)(n)
