@@ -15,6 +15,14 @@ G=symmetric_group(n)
    @test typeof(G)==GG
 end
 
+@testset "Explicit example" begin
+   x=perm([1,2,3,4,5],[6,7,8],[9,10,11,12])
+
+   @test order(x) == 60
+   @test x(3)==4
+   @test x(8)==6
+end
+
 @testset "Elements of Sym($i)" for i in 4:9
    G=symmetric_group(i)
    x=rand(G)
