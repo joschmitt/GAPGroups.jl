@@ -58,6 +58,8 @@ Base.:<(x::GAPGroupElem, y::GAPGroupElem) = x.X < y.X
 
 Base.:>(x::GAPGroupElem, y::GAPGroupElem) = x.X > y.X
 
+Base.:/(x::GAPGroupElem, y::GAPGroupElem) = x*y^-1
+
 # takes as input a list of arrays (not necessarly disjoint)
 function perm(L::Array{Int64,1}...)
    if length(L)==0
