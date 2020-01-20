@@ -8,7 +8,7 @@ GGE=GAPGroups.GAPGroupElem
 @testset "GAPGroups.jl" begin
 
 n=10
-G=symmetric_group(n)
+G= @inferred GG symmetric_group(n)
 @testset "The group Sym(n)" begin
    @test order(G) isa Int64
    @test order(G) == factorial(n)
@@ -25,11 +25,11 @@ end
 
 @testset "Elements of Sym($i)" for i in 4:9
    G=symmetric_group(i)
-   x=rand(G)
+   x=@inferred GGE rand(G)
    y=rand(G)
    z=perm([j for j=1:i])
    w=perm([1,2],[j for j=3:i])
-   ox=order(x)
+   ox= @inferred Int64 order(x)
    oy=order(y)
    oz=order(z)
 
@@ -37,6 +37,7 @@ end
    @test ox isa Int64
    @test sign(w)==(-1)^(i-2)
    @test sign(x*y)==sign(x)*sign(y)
+   @test x/y == x*y^-1
    @test (x*y).X == x.X*y.X
    @test x^2 == x*x
    @test x*one(G)==x
