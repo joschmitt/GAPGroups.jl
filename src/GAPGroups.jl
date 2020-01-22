@@ -1,3 +1,5 @@
+# further possible functions: similar, iterate, literal_pow, parent_type
+
 module GAPGroups
 
 using GAP
@@ -7,8 +9,10 @@ import Base.==
 import Base.rand
 import Base.conj
 import Base.conj!
+import Base.parent
+import Base.eltype
 
-export symmetric_group, order, perm, hasorder, gens, ngens, comm, comm!, inv!, parent
+export symmetric_group, order, perm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, mul, mul!
      #conj!, conj
 
 struct GAPGroup
@@ -30,11 +34,20 @@ end
 # to be fixed later
 Base.:hash(x::GAPGroupElem) = 0
 
-#Base.:parent(x::GAPGroupElem) = GAPGroup
+#shorter writing
+#Base.:parent(x::GAPGroupElem) = x==one(symmetric_group(2)) ? symmetric_group(1) : symmetric_group(GAP.Globals.LargestMovedPointPerm(x.X))
 
 function parent(x::GAPGroupElem)
-   symmetric_group(GAP.Globals.LargestMovedPointPerm(x.X))
+   if x==one(symmetric_group(1))
+      n = 1
+   else
+      n = GAP.Globals.LargestMovedPointPerm(x.X)
+   end
+   return symmetric_group(n)
 end
+
+Base.:eltype(::Type{G}) where G<:GAPGroup = GAPGroup
+Base.:eltype(::Type{G}) where G<:GAPGroupElem = GAPGroupElem
 
 function order(x::GAPGroup)
    return GAP.Globals.Size(x.X)
@@ -49,6 +62,9 @@ function rand(x::GAPGroup)
    return GAPGroupElem(s)
 end
 
+elem_type(G::GAPGroup) = GAPGroupElem
+rand_pseudo(G::GAPGroup) = rand(G)
+
 Base.:*(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X * y.X)
 
 function ==(x::GAPGroupElem, y::GAPGroupElem)
@@ -56,7 +72,9 @@ function ==(x::GAPGroupElem, y::GAPGroupElem)
 end
 
 Base.:one(x::GAPGroup) = GAPGroupElem(GAP.Globals.Identity(x.X))
-#one!(x::GAPGroupElem) = one(parent(x))
+one!(x::GAPGroupElem) = one(parent(x))
+
+Base.:isone(x::GAPGroupElem) = x == one(parent(x))
 
 Base.:inv(x::GAPGroupElem) = GAPGroupElem(GAP.Globals.Inverse(x.X))
 
@@ -69,6 +87,14 @@ Base.:^(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X ^ y.X)
 Base.:<(x::GAPGroupElem, y::GAPGroupElem) = x.X < y.X
 
 Base.:/(x::GAPGroupElem, y::GAPGroupElem) = x*y^-1
+
+mul(x::GAPGroupElem, y::GAPGroupElem) = x*y
+mul!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x*y
+
+div_right(x::GAPGroupElem, y::GAPGroupElem) = x*inv(y)
+div_left(x::GAPGroupElem, y::GAPGroupElem) = inv(y)*x
+div_right!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x*inv(y)
+div_left!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = inv(y)*x
 
 conj(x::GAPGroupElem, y::GAPGroupElem) = x^y
 conj!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x^y
