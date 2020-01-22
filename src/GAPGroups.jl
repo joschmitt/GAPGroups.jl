@@ -72,6 +72,7 @@ function ==(x::GAPGroupElem, y::GAPGroupElem)
 end
 
 Base.:one(x::GAPGroup) = GAPGroupElem(GAP.Globals.Identity(x.X))
+Base.:one(x::GAPGroupElem) = one(parent(x))
 one!(x::GAPGroupElem) = one(parent(x))
 
 Base.:isone(x::GAPGroupElem) = x == one(parent(x))
