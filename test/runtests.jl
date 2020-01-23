@@ -5,9 +5,9 @@ using Test
 GG=GAPGroups.GAPGroup
 GGE=GAPGroups.GAPGroupElem
 
-@testset "GAPGroups.jl" begin
 
-n=10
+function test_properties(n::Int64)
+
 G= @inferred GG symmetric_group(n)
 @testset "The group Sym(n)" begin
    @test order(G) isa Int64
@@ -46,6 +46,8 @@ end
    @test x^(ox-1)==x^-1
    @test x^w == w^-1*x*w
    @test z^y == y^-1*z*y
+   @test conj(x,y) == y^-1*x*y
+   @test comm(x,y) == x^-1*conj(x,y)
    @test z(1)==2
    @test (w^-1)(i)==i-1
    @test x(y(1))==(y*x)(1)
@@ -54,5 +56,5 @@ end
    @test (isless(x,y) && x<y) || (isequal(x,y) && x==y) || (isless(y,x) && x>y)
 end
 
-end
 
+end
