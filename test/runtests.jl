@@ -97,19 +97,19 @@ function test_GAPGroups_interface_conformance(g::GAPGroups.GAPGroupElem, h::GAPG
       g1,h1 = deepcopy(g), deepcopy(h)
 
       @test inv(g) isa typeof(g)
-      @test g,h == g1,h1
+      @test (g,h) == (g1,h1)
       @test g*h isa typeof(g)
-      @test g,h == g1,h1
+      @test (g,h) == (g1,h1)
       @test g^2 == g*g
-      @test g,h == g1,h1
+      @test (g,h) == (g1,h1)
       @test g^-3 == inv(g)*inv(g)*inv(g)
-      @test g,h == g1,h1
+      @test (g,h) == (g1,h1)
       @test (g*h)^-1 == inv(h)*inv(g)
-      @test g,h == g1,h1
+      @test (g,h) == (g1,h1)
       @test conj(g,h) == inv(h)*g*h
-      @test g,h == g1,h1
+      @test (g,h) == (g1,h1)
       @test comm(g,h) == g^-1*h^-1*g*h
-      @test g,h == g1,h1
+      @test (g,h) == (g1,h1)
       @test isone(g*inv(g)) && isone(inv(g)*g)
    end
 
@@ -122,10 +122,10 @@ function test_GAPGroups_interface_conformance(g::GAPGroups.GAPGroupElem, h::GAPG
 
       @testset "mul!" begin
          @test mul!(out,g,h) == g1*h1
-         @test g,h == g1,h1
+         @test (g,h) == (g1,h1)
 
          @test mul!(out,g,h) == g1*h1
-         @test g,h == g1,h1
+         @test (g,h) == (g1,h1)
 
          @test mul!(g,g,h) == g1*h1
          @test h==h1
@@ -142,7 +142,7 @@ function test_GAPGroups_interface_conformance(g::GAPGroups.GAPGroupElem, h::GAPG
       @testset "conj!" begin
          res = h1^-1*g1*h1
          @test conj!(out,g,h) == res
-         @test g,h == g1,h1
+         @test (g,h) == (g1,h1)
 
          @test conj!(g,g,h) == res
          @test h == h1
@@ -160,7 +160,7 @@ function test_GAPGroups_interface_conformance(g::GAPGroups.GAPGroupElem, h::GAPG
          res = g1^-1*h1^-1*g*h
 
          @test comm!(out,g,h) == res
-         @test g,h == g1,h1
+         @test (g,h) == (g1,h1)
 
          @test comm!(g,g,h) == res
          @test h == h1
@@ -175,7 +175,7 @@ function test_GAPGroups_interface_conformance(g::GAPGroups.GAPGroupElem, h::GAPG
          res = g*h^-1
 
          @test div_right!(out,g,h) == res
-         @test g,h == g1,h1
+         @test (g,h) == (g1,h1)
 
          @test div_right!(g,g,h) == res
          @test h == h1
@@ -190,18 +190,18 @@ function test_GAPGroups_interface_conformance(g::GAPGroups.GAPGroupElem, h::GAPG
 
          res = h^-1*g
 
-         @test left!(out,g,h) == res
-         @test g,h == g1,h1
+         @test div_left!(out,g,h) == res
+         @test (g,h) == (g1,h1)
 
-         @test left!(g,g,h) == res
+         @test div_left!(g,g,h) == res
          @test h == h1
          g = deepcopy(g1)
 
-         @test left!(h,g,h) == res
+         @test div_left!(h,g,h) == res
          @test g == g1
          h = deepcopy(h1)
 
-         @test left!(g,g,g) == one(g)
+         @test div_left!(g,g,g) == one(g)
          g = deepcopy(g1)
       end
    end
