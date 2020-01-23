@@ -67,6 +67,10 @@ rand_pseudo(G::GAPGroup) = rand(G)
 
 Base.:*(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X * y.X)
 
+function ==(x::GAPGroup, y::GAPGroup)
+   return x.X == y.X
+end
+
 function ==(x::GAPGroupElem, y::GAPGroupElem)
    return x.X == y.X
 end
