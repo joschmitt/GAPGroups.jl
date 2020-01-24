@@ -62,6 +62,7 @@ function rand(x::GAPGroup)
    return GAPGroupElem(s)
 end
 
+# one of the following should be non-parametric
 elem_type(G::GAPGroup) = GAPGroupElem
 rand_pseudo(G::GAPGroup) = rand(G)
 
@@ -113,11 +114,11 @@ hasorder(x::GAPGroupElem) = true
 hasgens(x::GAPGroup) = true
 
 # takes as input a list of arrays (not necessarly disjoint)
-function perm(L::Array{Int64,1}...)
+function perm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
    if length(L)==0
       return one(symmetric_group(1))
    else
-      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(y))) for y in L])
+      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y)))) for y in L])
    end
 end
 
