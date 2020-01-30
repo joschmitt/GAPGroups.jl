@@ -3,7 +3,6 @@
 module GAPGroups
 
 using GAP
-using GAPTypes
 
 import Base.==
 import Base.rand
