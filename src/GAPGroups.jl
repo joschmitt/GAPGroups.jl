@@ -56,6 +56,10 @@ function order(x::GAPGroupElem)
    return GAP.Globals.Order(x.X)
 end
 
+function order(::Type{T}, x::Union{GAPGroupElem, GAPGroup}) where T<:Number
+   return T(order(x))
+end
+
 function rand(x::GAPGroup)
    s=GAP.Globals.Random(x.X)
    return GAPGroupElem(s)
