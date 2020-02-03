@@ -13,7 +13,9 @@ function test_properties(n::Int64)
       @test hasorder(G) isa Bool
       @test hasorder(G)
       @test order(G) isa Int64
+      @test order(Int32, G) isa Int32
       @test order(G) == factorial(n)
+      @test order(BigInt, G) == factorial(n)
       @test typeof(G)==GG
       @test hasgens(G) isa Bool
       @test hasgens(G)
