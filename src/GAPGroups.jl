@@ -11,7 +11,7 @@ import Base.conj!
 import Base.parent
 import Base.eltype
 
-export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, mul, mul!
+export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, mul, mul!, deg
      #conj!, conj
 
 struct GAPGroup
@@ -20,7 +20,7 @@ end
 
 struct GAPGroupElem
    X::GapObj
-   #par::Int64       # Sym(par) = parent of the object
+   par::Int64       # Sym(par) = parent of the object
 end
 
 function symmetric_group(n::Int64)
@@ -38,12 +38,12 @@ Base.:hash(x::GAPGroupElem) = 0
 #Base.:parent(x::GAPGroupElem) = x==one(symmetric_group(2)) ? symmetric_group(1) : symmetric_group(GAP.Globals.LargestMovedPointPerm(x.X))
 
 function parent(x::GAPGroupElem)
-   if x==one(symmetric_group(1))
-      n = 1
-   else
-      n = GAP.Globals.LargestMovedPointPerm(x.X)
-   end
-   return symmetric_group(n)
+#   if x==one(symmetric_group(1))
+#      n = 1
+#   else
+#      n = GAP.Globals.LargestMovedPointPerm(x.X)
+#   end
+   return symmetric_group(x.par)
 end
 
 Base.:eltype(::Type{G}) where G<:GAPGroup = GAPGroup
@@ -61,16 +61,19 @@ function order(::Type{T}, x::Union{GAPGroupElem, GAPGroup}) where T<:Number
    return T(order(x))
 end
 
+# degree of the Permutation Group
+deg(x::GAPGroup) = GAP.Globals.LargestMovedPoint(x.X)
+
 function rand(x::GAPGroup)
    s=GAP.Globals.Random(x.X)
-   return GAPGroupElem(s)
+   return GAPGroupElem(s,deg(x))
 end
 
 # one of the following should be non-parametric
 elem_type(G::GAPGroup) = GAPGroupElem
 rand_pseudo(G::GAPGroup) = rand(G)
 
-Base.:*(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X * y.X)
+Base.:*(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X * y.X, max(x.par, y.par))
 
 function ==(x::GAPGroup, y::GAPGroup)
    return x.X == y.X
@@ -80,19 +83,19 @@ function ==(x::GAPGroupElem, y::GAPGroupElem)
    return x.X == y.X
 end
 
-Base.:one(x::GAPGroup) = GAPGroupElem(GAP.Globals.Identity(x.X))
-Base.:one(x::GAPGroupElem) = one(parent(x))
-one!(x::GAPGroupElem) = one(parent(x))
+Base.:one(x::GAPGroup) = GAPGroupElem(GAP.Globals.Identity(x.X),deg(x))
+Base.:one(x::GAPGroupElem) = one(parent(x),x.par)
+one!(x::GAPGroupElem) = one(parent(x),x.par)
 
 Base.:isone(x::GAPGroupElem) = x == one(parent(x))
 
-Base.:inv(x::GAPGroupElem) = GAPGroupElem(GAP.Globals.Inverse(x.X))
+Base.:inv(x::GAPGroupElem) = GAPGroupElem(GAP.Globals.Inverse(x.X),x.par)
 
 inv!(out::GAPGroupElem, x::GAPGroupElem) = inv(x)  #if needed later
 
-Base.:^(x::GAPGroupElem, y::Integer) = GAPGroupElem(x.X ^ y)
+Base.:^(x::GAPGroupElem, y::Integer) = GAPGroupElem(x.X ^ y,x.par)
 
-Base.:^(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X ^ y.X)
+Base.:^(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X ^ y.X, max(x.par,y.par))
 
 Base.:<(x::GAPGroupElem, y::GAPGroupElem) = x.X < y.X
 
@@ -118,7 +121,7 @@ hasorder(x::GAPGroupElem) = true
 hasgens(x::GAPGroup) = true
 
 function perm(L::Array{Int64,1})
-   return GAPGroupElem(GAP.Globals.PermList(GAP.julia_to_gap(L)))
+   return GAPGroupElem(GAP.Globals.PermList(GAP.julia_to_gap(L)), length(L))
 end
 
 # cperm stays for "cycle permutation", but we can change name if we want
@@ -127,19 +130,19 @@ function cperm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
    if length(L)==0
       return one(symmetric_group(1))
    else
-      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y)))) for y in L])
+      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))), maximum(y)) for y in L])
    end
 end
 
 function gens(G::GAPGroup)
    L=GAP.Globals.GeneratorsOfGroup(G.X)
    l=length(L)
-   return [GAPGroupElem(L[i]) for i in 1:l]
+   return [GAPGroupElem(L[i],deg(G)) for i in 1:l]
 end
 
 function gens(G::GAPGroup, i::Integer)
    L=GAP.Globals.GeneratorsOfGroup(G.X)
-   return GAPGroupElem(L[i])
+   return GAPGroupElem(L[i],deg(G))
 end
 
 ngens(G::GAPGroup) = length(gens(G))
