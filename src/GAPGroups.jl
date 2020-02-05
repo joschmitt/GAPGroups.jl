@@ -11,7 +11,7 @@ import Base.conj!
 import Base.parent
 import Base.eltype
 
-export symmetric_group, order, perm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, mul, mul!
+export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, mul, mul!
      #conj!, conj
 
 struct GAPGroup
@@ -20,6 +20,7 @@ end
 
 struct GAPGroupElem
    X::GapObj
+   #par::Int64       # Sym(par) = parent of the object
 end
 
 function symmetric_group(n::Int64)
@@ -116,8 +117,13 @@ hasorder(x::GAPGroup) = true
 hasorder(x::GAPGroupElem) = true
 hasgens(x::GAPGroup) = true
 
+function perm(L::Array{Int64,1})
+   return GAPGroupElem(GAP.Globals.PermList(GAP.julia_to_gap(L)))
+end
+
+# cperm stays for "cycle permutation", but we can change name if we want
 # takes as input a list of arrays (not necessarly disjoint)
-function perm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
+function cperm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
    if length(L)==0
       return one(symmetric_group(1))
    else
