@@ -27,8 +27,11 @@ function explicit_example(n::Int64)
 
    if n>9
    @testset "Explicit example" begin
-      x=perm(1:5,6:8,9:n)
+      x=cperm(1:5,6:8,9:n)
+      A=vcat([i for i in 10:n],[9])
+      y=perm(vcat([2,3,4,5,1,7,8,6],A))
 
+      @test x==y
       @test order(x) == lcm(15,n-8)
       @test x(3)==4
       @test x(8)==6
@@ -39,14 +42,16 @@ end
 
 function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
    @testset "Elements of Sym($i)" for i in L
+      if i>1
       G=symmetric_group(i)
       x=@inferred GGE rand(G)
       y=rand(G)
-      z=perm(1:i)
+      #z=cperm(1:i)
+      z=perm(vcat([j for j in 2:i],[1]))
       if minimum(L)>3
-         w=perm([1,2],[j for j=3:i])
+         w=cperm([1,2],[j for j=3:i])
       else
-         w=perm([1,2])
+         w=cperm([1,2])
       end
       ox= @inferred Int64 order(x)
       oy=order(y)
@@ -73,6 +78,7 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
       @test x>y || x==y || x<y
       @test isequal(x,y) || isless(x,y) || isless(y,x)
       @test (isless(x,y) && x<y) || (isequal(x,y) && x==y) || (isless(y,x) && x>y)
+      end
    end
 end
 
