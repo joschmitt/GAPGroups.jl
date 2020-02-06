@@ -18,7 +18,7 @@ struct GAPGroup
    X::GapObj
 end
 
-struct GAPGroupElem
+mutable struct GAPGroupElem
    X::GapObj
    par::Int64       # Sym(par) = parent of the object
 end
@@ -37,17 +37,25 @@ Base.:hash(x::GAPGroupElem) = 0
 #shorter writing
 #Base.:parent(x::GAPGroupElem) = x==one(symmetric_group(2)) ? symmetric_group(1) : symmetric_group(GAP.Globals.LargestMovedPointPerm(x.X))
 
+#=
 function parent(x::GAPGroupElem)
-#   if x==one(symmetric_group(1))
-#      n = 1
-#   else
-#      n = GAP.Globals.LargestMovedPointPerm(x.X)
-#   end
-   return symmetric_group(x.par)
+   if x==one(symmetric_group(1))
+      n = 1
+   else
+      n = GAP.Globals.LargestMovedPointPerm(x.X)
+   end
+   return symmetric_group(n)
 end
+=#
+
+parent(x::GAPGroupElem) = symmetric_group(x.par)
 
 Base.:eltype(::Type{G}) where G<:GAPGroup = GAPGroup
 Base.:eltype(::Type{G}) where G<:GAPGroupElem = GAPGroupElem
+
+function deg(x::GAPGroup)
+   return GAP.Globals.LargestMovedPoint(x.X)
+end
 
 function order(x::GAPGroup)
    return GAP.Globals.Size(x.X)
@@ -60,9 +68,6 @@ end
 function order(::Type{T}, x::Union{GAPGroupElem, GAPGroup}) where T<:Number
    return T(order(x))
 end
-
-# degree of the Permutation Group
-deg(x::GAPGroup) = GAP.Globals.LargestMovedPoint(x.X)
 
 function rand(x::GAPGroup)
    s=GAP.Globals.Random(x.X)
@@ -84,8 +89,10 @@ function ==(x::GAPGroupElem, y::GAPGroupElem)
 end
 
 Base.:one(x::GAPGroup) = GAPGroupElem(GAP.Globals.Identity(x.X),deg(x))
-Base.:one(x::GAPGroupElem) = one(parent(x),x.par)
-one!(x::GAPGroupElem) = one(parent(x),x.par)
+Base.:one(x::GAPGroupElem) = one(parent(x))
+one!(x::GAPGroupElem) = one(parent(x))
+
+Base.:show(x::GAPGroupElem) = print(x.X)
 
 Base.:isone(x::GAPGroupElem) = x == one(parent(x))
 
@@ -95,7 +102,7 @@ inv!(out::GAPGroupElem, x::GAPGroupElem) = inv(x)  #if needed later
 
 Base.:^(x::GAPGroupElem, y::Integer) = GAPGroupElem(x.X ^ y,x.par)
 
-Base.:^(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X ^ y.X, max(x.par,y.par))
+Base.:^(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X ^ y.X, max(x.par, y.par))
 
 Base.:<(x::GAPGroupElem, y::GAPGroupElem) = x.X < y.X
 
@@ -121,7 +128,7 @@ hasorder(x::GAPGroupElem) = true
 hasgens(x::GAPGroup) = true
 
 function perm(L::Array{Int64,1})
-   return GAPGroupElem(GAP.Globals.PermList(GAP.julia_to_gap(L)), length(L))
+   return GAPGroupElem(GAP.Globals.PermList(GAP.julia_to_gap(L)),length(L))
 end
 
 # cperm stays for "cycle permutation", but we can change name if we want
@@ -130,14 +137,15 @@ function cperm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
    if length(L)==0
       return one(symmetric_group(1))
    else
-      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))), maximum(y)) for y in L])
+      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))),maximum(y)) for y in L])
    end
 end
 
 function gens(G::GAPGroup)
    L=GAP.Globals.GeneratorsOfGroup(G.X)
    l=length(L)
-   return [GAPGroupElem(L[i],deg(G)) for i in 1:l]
+   n=deg(G)
+   return [GAPGroupElem(L[i],n) for i in 1:l]
 end
 
 function gens(G::GAPGroup, i::Integer)
@@ -150,6 +158,17 @@ ngens(G::GAPGroup) = length(gens(G))
 Base.:sign(x::GAPGroupElem) = GAP.Globals.SignPerm(x.X)
 
 Base.:isless(x::GAPGroupElem, y::GAPGroupElem) = x<y
+
+#embedding of a permutation in a bigger group
+function (G::GAPGroup)(x::GAPGroupElem)
+   if GAP.Globals.LargestMovedPointPerm(x.X) > deg(G)
+      throw(ArgumentError("the element does not embed in the group"))
+   else
+      x1=deepcopy(x)
+      x1.par=deg(G)
+   end
+   return x1
+end
 
 #evaluation function
 function (x::GAPGroupElem)(n)
