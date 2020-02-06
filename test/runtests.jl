@@ -10,6 +10,8 @@ function test_properties(n::Int64)
 
    G= @inferred GG symmetric_group(n)
    @testset "The group Sym(n)" begin
+      @test deg(G) isa Integer
+      @test deg(G) == n
       @test hasorder(G) isa Bool
       @test hasorder(G)
       @test order(G) isa Int64
@@ -31,11 +33,17 @@ function explicit_example(n::Int64)
       A=vcat([i for i in 10:n],[9])
       y=perm(vcat([2,3,4,5,1,7,8,6],A))
 
+      @test parent(x)==symmetric_group(n)
       @test x==y
       @test order(x) == lcm(15,n-8)
       @test x(3)==4
       @test x(8)==6
       @test x(n)==9
+      H=symmetric_group(n+3)
+      @test parent(x)!=H
+      @test parent(H(x))==H
+      x=H(x)
+      @test parent(x)==H
    end
    end
 end
@@ -61,6 +69,8 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
       @test ox isa Int64
       @test sign(z)==(-1)^(i-1)
       @test sign(x*y)==sign(x)*sign(y)
+      @test parent(x)==G
+      @test parent(z)==G
       @test x/y == x*y^-1
       @test (x*y).X == x.X*y.X
       @test x^2 == x*x
