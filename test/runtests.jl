@@ -82,6 +82,8 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
       @test z^y == y^-1*z*y
       @test conj(x,y) == y^-1*x*y
       @test comm(x,y) == x^-1*conj(x,y)
+      @test comm(x,y) == div_left(x^y,x)
+      @test div_right(x,y) == x/y
       @test z(1)==2
       @test (z^-1)(i)==i-1
       @test x(y(1))==(y*x)(1)
