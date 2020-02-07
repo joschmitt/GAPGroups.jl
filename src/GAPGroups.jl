@@ -11,7 +11,7 @@ import Base.conj!
 import Base.parent
 import Base.eltype
 
-export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, mul, mul!, deg
+export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, mul, mul!, deg, listperm
      #conj!, conj
 
 struct GAPGroup
@@ -92,7 +92,8 @@ Base.:one(x::GAPGroup) = GAPGroupElem(GAP.Globals.Identity(x.X),deg(x))
 Base.:one(x::GAPGroupElem) = one(parent(x))
 one!(x::GAPGroupElem) = one(parent(x))
 
-Base.:show(x::GAPGroupElem) = print(x.X)
+Base.:show(io::IO, x::GAPGroupElem) = print(io,x.X)
+Base.:show(io::IO, x::GAPGroup) = print(io,x.X)
 
 Base.:isone(x::GAPGroupElem) = x == one(parent(x))
 
@@ -139,6 +140,10 @@ function cperm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
    else
       return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))),maximum(y)) for y in L])
    end
+end
+
+function listperm(x::GAPGroupElem)
+   return [x(i) for i in 1:deg(parent(x))]
 end
 
 function gens(G::GAPGroup)
