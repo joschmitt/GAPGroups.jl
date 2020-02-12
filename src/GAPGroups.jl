@@ -10,12 +10,14 @@ import Base.conj
 import Base.conj!
 import Base.parent
 import Base.eltype
+import Base.iterate
 
-export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, mul, mul!, deg, listperm
+export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm
      #conj!, conj
 
 struct GAPGroup
    X::GapObj
+   deg::Int64       # G = Sym(deg)
 end
 
 mutable struct GAPGroupElem
@@ -27,7 +29,7 @@ function symmetric_group(n::Int64)
    if n<1
      throw(ArgumentError("it must be a positive integer"))
    else
-      return GAPGroup(GAP.Globals.SymmetricGroup(n))
+      return GAPGroup(GAP.Globals.SymmetricGroup(n),n)
    end
 end
 
@@ -54,11 +56,11 @@ Base.:eltype(::Type{G}) where G<:GAPGroup = GAPGroup
 Base.:eltype(::Type{G}) where G<:GAPGroupElem = GAPGroupElem
 
 function deg(x::GAPGroup)
-   return GAP.Globals.LargestMovedPoint(x.X)
+   return x.deg
 end
 
 function order(x::GAPGroup)
-   return GAP.Globals.Size(x.X)
+   return factorial(x.deg)
 end
 
 function order(x::GAPGroupElem)
@@ -123,6 +125,19 @@ conj!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x^y
 comm(x::GAPGroupElem, y::GAPGroupElem) = x^-1*x^y
 comm!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x^-1*x^y
 
+function iterate(G::GAPGroup)
+   L=GAP.Globals.List(G.X)
+   len=length(L)
+   iszero(len) && return nothing
+   return GAPGroupElem(L[1],G.deg), (1,len)
+end
+function iterate(G::GAPGroup, state)
+   L=GAP.Globals.List(G.X)
+   s,len = state
+   s==len && return nothing
+   return GAPGroupElem(L[s+1],G.deg), (s+1,len)
+end
+
 #maybe in future add more checks
 hasorder(x::GAPGroup) = true
 hasorder(x::GAPGroupElem) = true
@@ -143,19 +158,18 @@ function cperm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
 end
 
 function listperm(x::GAPGroupElem)
-   return [x(i) for i in 1:deg(parent(x))]
+   return [x(i) for i in 1:x.deg]
 end
 
 function gens(G::GAPGroup)
    L=GAP.Globals.GeneratorsOfGroup(G.X)
    l=length(L)
-   n=deg(G)
-   return [GAPGroupElem(L[i],n) for i in 1:l]
+   return [GAPGroupElem(L[i],G.deg) for i in 1:l]
 end
 
 function gens(G::GAPGroup, i::Integer)
    L=GAP.Globals.GeneratorsOfGroup(G.X)
-   return GAPGroupElem(L[i],deg(G))
+   return GAPGroupElem(L[i],G.deg)
 end
 
 ngens(G::GAPGroup) = length(gens(G))
@@ -166,11 +180,11 @@ Base.:isless(x::GAPGroupElem, y::GAPGroupElem) = x<y
 
 #embedding of a permutation in a bigger group
 function (G::GAPGroup)(x::GAPGroupElem)
-   if GAP.Globals.LargestMovedPointPerm(x.X) > deg(G)
+   if GAP.Globals.LargestMovedPointPerm(x.X) > G.deg
       throw(ArgumentError("the element does not embed in the group"))
    else
       x1=deepcopy(x)
-      x1.par=deg(G)
+      x1.par=G.deg
    end
    return x1
 end
