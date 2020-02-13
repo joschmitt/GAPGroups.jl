@@ -143,7 +143,8 @@ end
 
 function collect(G::GAPGroup)
    if G.deg>10  throw(ArgumentError("the group is too big")) end  # to be discussed whether the group is too big or not
-   return [x for x in G]
+   L=GAP.gap_to_julia(GAP.Globals.List(G.X))
+   return [GAPGroupElem(x,G.deg) for x in L]
 end   
 
 #maybe in future add more checks
