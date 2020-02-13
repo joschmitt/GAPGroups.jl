@@ -71,6 +71,8 @@ function order(::Type{T}, x::Union{GAPGroupElem, GAPGroup}) where T<:Number
    return T(order(x))
 end
 
+Base.:length(x::GAPGroup) = order(x)
+
 function rand(x::GAPGroup)
    s=GAP.Globals.Random(x.X)
    return GAPGroupElem(s,deg(x))
@@ -126,6 +128,7 @@ comm(x::GAPGroupElem, y::GAPGroupElem) = x^-1*x^y
 comm!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x^-1*x^y
 
 function iterate(G::GAPGroup)
+   if
    L=GAP.Globals.List(G.X)
    len=length(L)
    iszero(len) && return nothing
