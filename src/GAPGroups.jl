@@ -11,6 +11,7 @@ import Base.conj!
 import Base.parent
 import Base.eltype
 import Base.iterate
+import Base.collect
 
 export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm
      #conj!, conj
@@ -128,7 +129,6 @@ comm(x::GAPGroupElem, y::GAPGroupElem) = x^-1*x^y
 comm!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x^-1*x^y
 
 function iterate(G::GAPGroup)
-   if
    L=GAP.Globals.List(G.X)
    len=length(L)
    iszero(len) && return nothing
@@ -140,6 +140,11 @@ function iterate(G::GAPGroup, state)
    s==len && return nothing
    return GAPGroupElem(L[s+1],G.deg), (s+1,len)
 end
+
+function collect(G::GAPGroup)
+   if G.deg>10  throw(ArgumentError("the group is too big")) end  # to be discussed whether the group is too big or not
+   return [x for x in G]
+end   
 
 #maybe in future add more checks
 hasorder(x::GAPGroup) = true
