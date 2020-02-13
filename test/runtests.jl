@@ -18,10 +18,35 @@ function test_properties(n::Int64)
       @test order(Int32, G) isa Int32
       @test order(G) == factorial(n)
       @test order(BigInt, G) == factorial(n)
+      @test length(G) == order(G)
       @test typeof(G)==GG
       @test hasgens(G) isa Bool
       @test hasgens(G)
       @test gens(G) isa Vector{GGE}
+   end
+end
+
+function test_iterate(n::Int64)
+   if 3<n && n<11          # otherwise the group is too big
+   @testset "Iteration" begin
+      G=symmetric_group(n)
+      L=collect(G)
+      @test L isa Vector{GGE}
+      @test length(L) == factorial(G.deg)
+      @test length(unique(L)) == factorial(G.deg)
+      @test rand(G) isa GGE
+      @test rand(G) in G
+      A=[]
+      for x in G   A=vcat(A,[x])   end
+      @test length(A) == factorial(G.deg)
+      @test length(unique(A)) == factorial(G.deg)
+      @test Set(A) == Set(L)
+      s=0         # check if the number of (n-1)-cycles is correct
+      for x in G 
+         if order(x)==(n-1)  s+=1  end
+      end
+      @test s == factorial(n-2)*n
+   end
    end
 end
 
