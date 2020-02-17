@@ -56,10 +56,13 @@ function explicit_example(n::Int64)
    @testset "Explicit example" begin
       x=cperm(1:5,6:8,9:n)
       A=vcat([i for i in 10:n],[9])
-      y=perm(vcat([2,3,4,5,1,7,8,6],A))
+      A=vcat([2,3,4,5,1,7,8,6],A)
+      y=perm(A)
 
       @test parent(x)==symmetric_group(n)
       @test x==y
+      @test A==listperm(y)
+      @test x==perm(listperm(x))
       @test order(x) == lcm(15,n-8)
       @test x(3)==4
       @test x(8)==6
@@ -115,6 +118,7 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
       @test x>y || x==y || x<y
       @test isequal(x,y) || isless(x,y) || isless(y,x)
       @test (isless(x,y) && x<y) || (isequal(x,y) && x==y) || (isless(y,x) && x>y)
+      @test y==perm(listperm(y))
       end
    end
 end
