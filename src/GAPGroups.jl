@@ -167,7 +167,7 @@ function cperm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
 end
 
 function listperm(x::GAPGroupElem)
-   return [x(i) for i in 1:x.deg]
+   return [x(i) for i in 1:x.par]
 end
 
 function gens(G::GAPGroup)
