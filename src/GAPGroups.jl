@@ -97,8 +97,8 @@ Base.:one(x::GAPGroup) = GAPGroupElem(GAP.Globals.Identity(x.X),deg(x))
 Base.:one(x::GAPGroupElem) = one(parent(x))
 one!(x::GAPGroupElem) = one(parent(x))
 
-Base.:show(io::IO, x::GAPGroupElem) = print(io,x.X)
-Base.:show(io::IO, x::GAPGroup) = print(io,x.X)
+Base.:show(io::IO, x::GAPGroupElem) =  print(GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
+Base.:show(io::IO, x::GAPGroup) = print(GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
 
 Base.:isone(x::GAPGroupElem) = x == one(parent(x))
 
