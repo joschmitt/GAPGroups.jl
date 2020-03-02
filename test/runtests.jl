@@ -9,13 +9,13 @@ GGE=GAPGroups.GAPGroupElem
 function test_properties(n::Int64)
 
    G= @inferred GG symmetric_group(n)
-   @testset "The group Sym(n)" begin
+   @testset "The group Sym($n)" begin
       @test deg(G) isa Integer
       @test deg(G) == n
       @test hasorder(G) isa Bool
       @test hasorder(G)
       @test order(G) isa Int64
-      @test order(Int32, G) isa Int32
+      if n<13 @test order(Int32, G) isa Int32 end
       @test order(G) == factorial(n)
       @test order(BigInt, G) == factorial(n)
       @test length(G) == order(G)
@@ -53,13 +53,13 @@ end
 function explicit_example(n::Int64)
 
    if n>9
+   G=symmetric_group(n)
    @testset "Explicit example" begin
       x=cperm(1:5,6:8,9:n)
       A=vcat([i for i in 10:n],[9])
       A=vcat([2,3,4,5,1,7,8,6],A)
       y=perm(A)
 
-      @test parent(x)==symmetric_group(n)
       @test x==y
       @test A==listperm(y)
       @test x==perm(listperm(x))
@@ -67,11 +67,24 @@ function explicit_example(n::Int64)
       @test x(3)==4
       @test x(8)==6
       @test x(n)==9
+   end
+   @testset "Change of parent" begin
+      x=cperm(1:5,6:8,9:n)
       H=symmetric_group(n+3)
-      @test parent(x)!=H
+      K=symmetric_group(n-1)
+      
+      @test parent(x)==G
+      x=cperm(H,1:5,6:8,9:n)
+      @test parent(x)===H
+      x=cperm(G,1:5,6:8,9:n)
+      @test_throws ArgumentError x=cperm(K,1:5,6:8,9:n)
+      @test parent(x)===G
       @test parent(H(x))==H
+      @test parent(H(x))===H
+      @test parent(x)!=H
       x=H(x)
-      @test parent(x)==H
+      @test parent(x)===H
+      @test_throws ArgumentError K(x)
    end
    end
 end
