@@ -1,4 +1,8 @@
 # further possible functions: similar, iterate, literal_pow, parent_type
+
+
+module GAPGroups 
+
 using GAP
 
 import Base.==
@@ -13,58 +17,7 @@ import Base.collect
 export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm
      #conj!, conj
 
-
-abstract type Group end
-
-abstract type GroupElem end
-
-struct PermGroup <: Group
-   X::GapObj
-   deg::Int64       # G < Sym(deg)
-   
-   function PermGroup(G::GapObj)
-     n = GAP.gap_to_julia(Int64, GAP.Globals.LargestMovedPoint(G))
-     z = new(G, n)
-     return z
-   end
-   
-   function PermGroup(G::GapObj, deg::Int)
-     z = new(G, deg)
-     return z
-   end
-end
-
-mutable struct PermGroupElem <: GroupElem
-   parent::PermGroup
-   X::GapObj   
-end
-
-struct MatrixGroup <: Group
-  X::GapObj
-end
-
-mutable struct MatrixGroupElem <: GroupElem
-   parent::GAPGroup
-   X::GapObj       
-end
-
-struct PolycyclicGroup <: Group
-  X::GapObj
-end
-
-mutable struct PolycyclicGroupElem <: GroupElem
-   parent::GAPGroup
-   X::GapObj
-end
-
-struct FPGroup <: Group
-  X::GapObj
-end
-
-mutable struct FPGroupElem <: GroupElem
-   parent::GAPGroup
-   X::GapObj
-end
+include("./types.jl")
 
 elem_type(::PermGroup) = PermGroupElem
 elem_type(::MatrixGroup) = MatrixGroupElem
@@ -80,19 +33,111 @@ function group_element(G::MatrixGroup, x::GapObj)
   return MatrixGroupElem(G, x)
 end
 
+################################################################################
+#
+#  Some basic constructors
+#  
+################################################################################
+
 function symmetric_group(n::Int64)
-   if n<1
-     throw(ArgumentError("it must be a positive integer"))
-   end
-   return PermGroup(GAP.Globals.SymmetricGroup(n), n)
+  if n < 1
+    throw(ArgumentError("it must be a positive integer"))
+  end
+  return PermGroup(GAP.Globals.SymmetricGroup(n), n)
+end
+
+function symmetric_group(::Type{T}, n::Int) where T <: Group
+  if n < 1
+    throw(ArgumentError("n must be a positive integer"))
+  end
+  return T(GAP.Globals.SymmetricGroup(_get_gap_function(T), n))
 end
 
 function alternating_group(n::Int64)
-  if n<1
+  if n < 1
     throw(ArgumentError("it must be a positive integer"))
   end
   return PermGroup(GAP.Globals.AlternatingGroup(n), n)
 end
+
+function alternating_group(::Type{T}, n::Int) where T <: Group
+  if n < 1
+    throw(ArgumentError("it must be a positive integer"))
+  end
+  return T(GAP.Globals.AlternatingGroup(_get_gap_function(T), n))
+end
+
+function small_group(n::Int, m::Int)
+  return PolycyclicGroup(GAP.Globals.SmallGroup(n, m))
+end
+
+function cyclic_group(n::Int)
+  return PolycyclicGroup(GAP.Globals.CyclicGroup(n))
+end
+
+function cyclic_group(::Type{T}, n::Int) where T <: Group
+  return T(GAP.Globals.CyclicGroup(_get_gap_function(T), n))
+end
+
+function abelian_group(v::Vector{Int})
+  for i = 1:length(v)
+    iszero(v[i]) && error("Cannot represent an infinite group as a polycyclic group")
+  end
+  v1 = GAP.julia_to_gap(v)
+  return PolycyclicGroup(GAP.Globals.AbelianGroup(v1))
+end
+
+function abelian_group(::Type{T}, v::Vector{Int]) where T <: Group
+  v1 = GAP.julia_to_gap(v)
+  return T(GAP.Globals.AbelianGroup(_get_gap_function(T), v1))
+end
+
+function mathieu_group(n::Int)
+  @assert n in Int[9, 10, 11, 12, 21, 22, 23, 24]
+  return PermGroup(GAP.Globals.MathieuGroup(n), n)
+end
+
+function free_abelian_group(n::Int)
+  return FPGroup(GAP.Globals.FreeAbelianGroup(n))
+end
+
+function dihedral_group(n::Int)
+  @assert iseven(n)
+  return PolycyclicGroup(GAP.Globals.DihedralGroup(n))
+end
+
+function dihedral_group(::Type{T}, n::Int) where T <: Group
+  @assert iseven(n)
+  return T(GAP.Globals.DihedralGroup(_get_gap_function(T), n))
+end
+
+function quaternion_group(n::Int)
+  return PolycyclicGroup(GAP.Globals.QuaternionGroup(n))
+end
+
+function quaternion_group(::Type{T}, n::Int) where T <: Group 
+  @assert divisible(n, 4)
+  return T(GAP.Globals.QuaternionGroup(_get_gap_function(T)), n)
+end
+
+
+function GL(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.GL(n, q))
+end
+
+function GL(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.GL(_get_gap_function(T),n, q))
+end
+
+function SL(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.SL(n, q))
+end
+
+function SL(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.SL(_get_gap_function(T), n, q))
+end
+
+
 
 
 function elements(G::T) where T <: Group
@@ -112,10 +157,17 @@ Base.:hash(x::GroupElem) = 0
 #shorter writing
 #Base.:parent(x::GAPGroupElem) = x==one(symmetric_group(2)) ? symmetric_group(1) : symmetric_group(GAP.Globals.LargestMovedPointPerm(x.X))
 
-function parent(x::GAPGroupElem)
+function parent(x::GroupElem)
   return x.parent
 end
 
+function isfinite(G::PermGroup)
+  return true
+end
+
+function isfinite(G::Group)
+  return GAP.Globals.IsFinite(G)
+end
 
 function degree(x::PermGroup)
    return x.deg
@@ -129,104 +181,114 @@ function order(x::GroupElem)
    return GAP.gap_to_julia(GAP.Globals.Order(x.X))
 end
 
-function order(::Type{T}, x::Union{GAPGroupElem, GAPGroup}) where T<:Number
+function order(::Type{T}, x::Union{GroupElem, Group}) where T<:Number
    return T(order(x))
 end
 
-Base.:length(x::GAPGroup) = order(x)
+#Base.:length(x::Group) = order(x)
 
-function rand(x::GAPGroup)
+function rand(x::Group)
    s = GAP.Globals.Random(x.X)
    return group_elem(x, s)
 end
 
 # one of the following should be non-parametric
-rand_pseudo(G::GAPGroup) = rand(G)
+rand_pseudo(G::Group) = rand(G)
 
-# maxgroup (Sym(n), Sym(m)) = Sym( max(m,n)); it serves for operations between different groups
-function maxgroup(x::GAPGroup, y::GAPGroup)
-   if x.deg < y.deg return y end
-   return x
+
+function _maxgroup(x::T, y::T) where T <: Group
+   if x == y
+     return x
+   elseif GAP.Globals.IsSubset(x, y)
+     return x
+   elseif GAP.Globals.IsSubset(y, x)
+     return y
+   else
+     error("Not yet implemented")
+   end
 end
 
-Base.:*(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X * y.X, maxgroup(x.par,y.par))
+#We need a lattice of groups to implement this properly
+function _prod(x::GroupElem, y::GroupElem)
+  G = _maxgroup(parent(x), parent(y))
+  return group_element(G, x.X*y.X)
+end
 
-function ==(x::GAPGroup, y::GAPGroup)
+Base.:*(x::GroupElem, y::GroupElem) = _prod(x, y)
+
+function ==(x::Group, y::Group)
    return x.X == y.X
 end
 
-function ==(x::GAPGroupElem, y::GAPGroupElem)
+function ==(x::GroupElem, y::GroupElem)
    return x.X == y.X
 end
 
-Base.:one(x::GAPGroup) = GAPGroupElem(GAP.Globals.Identity(x.X),x)
-Base.:one(x::GAPGroupElem) = one(parent(x))
-one!(x::GAPGroupElem) = one(parent(x))
+Base.:one(x::Group) = group_element(x, GAP.Globals.Identity(x.X))
+Base.:one(x::GroupElem) = one(parent(x))
+one!(x::GroupElem) = one(parent(x))
 
-Base.:show(io::IO, x::GAPGroupElem) =  print(GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
-Base.:show(io::IO, x::GAPGroup) = print(GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
+Base.:show(io::IO, x::GroupElem) =  print(GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
+Base.:show(io::IO, x::Group) = print(GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
 
-Base.:isone(x::GAPGroupElem) = x == one(parent(x))
+Base.:isone(x::GroupElem) = x == one(parent(x))
 
-Base.:inv(x::GAPGroupElem) = GAPGroupElem(GAP.Globals.Inverse(x.X),x.par)
+Base.:inv(x::GroupElem) = group_element(parent(x), GAP.Globals.Inverse(x.X))
 
-inv!(out::GAPGroupElem, x::GAPGroupElem) = inv(x)  #if needed later
+inv!(out::GroupElem, x::GroupElem) = inv(x)  #if needed later
 
-Base.:^(x::GAPGroupElem, y::Integer) = GAPGroupElem(x.X ^ y,x.par)
+Base.:^(x::GroupElem, y::Integer) = group_element(parent(x), x.X ^ y)
 
-Base.:^(x::GAPGroupElem, y::GAPGroupElem) = GAPGroupElem(x.X ^ y.X, maxgroup(x.par, y.par))
+Base.:^(x::GroupElem, y::GroupElem) = group_element(_maxgroup(parent(x), parent(y), x.X ^ y.X))
 
-Base.:<(x::GAPGroupElem, y::GAPGroupElem) = x.X < y.X
+#Is this useful?
+#Base.:<(x::GroupElem, y::GroupElem) = x.X < y.X
 
-Base.:/(x::GAPGroupElem, y::GAPGroupElem) = x*y^-1
+Base.:/(x::GroupElem, y::GroupElem) = x*y^-1
 
-mul(x::GAPGroupElem, y::GAPGroupElem) = x*y
-mul!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x*y
+mul(x::GroupElem, y::GroupElem) = x*y
+mul!(out::GroupElem, x::GroupElem, y::GroupElem) = x*y
 
-div_right(x::GAPGroupElem, y::GAPGroupElem) = x*inv(y)
-div_left(x::GAPGroupElem, y::GAPGroupElem) = inv(y)*x
-div_right!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x*inv(y)
-div_left!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = inv(y)*x
+div_right(x::GroupElem, y::GroupElem) = x*inv(y)
+div_left(x::GroupElem, y::GroupElem) = inv(y)*x
+div_right!(out::GroupElem, x::GroupElem, y::GroupElem) = x*inv(y)
+div_left!(out::GroupElem, x::GroupElem, y::GroupElem) = inv(y)*x
 
-conj(x::GAPGroupElem, y::GAPGroupElem) = x^y
-conj!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x^y
+conj(x::GroupElem, y::GroupElem) = x^y
+conj!(out::GroupElem, x::GroupElem, y::GroupElem) = x^y
 
-comm(x::GAPGroupElem, y::GAPGroupElem) = x^-1*x^y
-comm!(out::GAPGroupElem, x::GAPGroupElem, y::GAPGroupElem) = x^-1*x^y
+comm(x::GroupElem, y::GroupElem) = x^-1*x^y
+comm!(out::GroupElem, x::GroupElem, y::GroupElem) = x^-1*x^y
 
-function iterate(G::GAPGroup)
+function iterate(G::Group)
    L=GAP.Globals.List(G.X)
    len=length(L)
    iszero(len) && return nothing
-   return GAPGroupElem(L[1],G.deg), (1,len)
-end
-function iterate(G::GAPGroup, state)
-   L=GAP.Globals.List(G.X)
-   s,len = state
-   s==len && return nothing
-   return GAPGroupElem(L[s+1],G.deg), (s+1,len)
+   return group_elem(G, L[1]), (1,len)
 end
 
-function collect(G::GAPGroup)
-   if G.deg>10  throw(ArgumentError("the group is too big")) end  # to be discussed whether the group is too big or not
-   L=GAP.gap_to_julia(GAP.Globals.List(G.X))
-   return [GAPGroupElem(x,G) for x in L]
+function iterate(G::Group, state)
+   L = GAP.Globals.List(G.X)
+   s,len = state
+   s == len && return nothing
+   return group_elem(G, L[s+1]), (s+1,len)
+end
+
+function collect(G::Group)
+  L = GAP.gap_to_julia(GAP.Globals.List(G.X))
+  return elem_type(G)[group_elem(G, x) for x in L]
 end   
 
-#maybe in future add more checks
-hasorder(x::GAPGroup) = true
-hasorder(x::GAPGroupElem) = true
-hasgens(x::GAPGroup) = true
-
 function perm(L::Array{Int64,1})
-   return GAPGroupElem(GAP.Globals.PermList(GAP.julia_to_gap(L)),symmetric_group(length(L)))
+   return PermGroupElem(symmetric_group(length(L)), GAP.Globals.PermList(GAP.julia_to_gap(L)))
 end
 
-function perm(g::GAPGroup, L::Array{Int64,1})
-   x=GAP.Globals.PermList(GAP.julia_to_gap(L))
-   if GAP.Globals.IN(x,g.X) return GAPGroupElem(GAP.Globals.PermList(GAP.julia_to_gap(L)),g)
-   else  throw(ArgumentError("the element does not embed in the group"))
+function perm(g::PermGroup, L::Array{Int64,1})
+   x = GAP.Globals.PermList(GAP.julia_to_gap(L))
+   if GAP.Globals.IN(x,g.X) 
+     return PermGroupElem(g, GAP.Globals.PermList(GAP.julia_to_gap(L)))
    end
+   throw(ArgumentError("the element does not embed in the group"))
 end
 
 # cperm stays for "cycle permutation", but we can change name if we want
@@ -235,49 +297,50 @@ function cperm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
    if length(L)==0
       return one(symmetric_group(1))
    else
-      x=GAP.Globals.Product(GAP.julia_to_gap([GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))) for y in L]))
-      return GAPGroupElem(x, symmetric_group(maximum([maximum(y) for y in L])))
-#      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))),symmetric_group(maximum(y))) for y in L])
+      return prod([PermGroupElem(symmetric_group(maximum(y)), GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y)))) for y in L])
    end
 end
 
 # cperm stays for "cycle permutation", but we can change name if we want
 # takes as input a list of arrays (not necessarly disjoint)
 # WARNING: we allow e.g. PermList([2,3,1,4,5,6]) in Sym(3)
-function cperm(g::GAPGroup,L::Union{Array{Int64,1},UnitRange{Int64}}...)
+function cperm(g::PermGroup,L::Union{Array{Int64,1},UnitRange{Int64}}...)
    if length(L)==0
       return one(g)
    else
       x=GAP.Globals.Product(GAP.julia_to_gap([GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))) for y in L]))
-      if GAP.Globals.IN(x,g.X) return GAPGroupElem(x,g)
+      if GAP.Globals.IN(x,g.X) return PermGroupElem(g, x)
       else throw(ArgumentError("the element does not embed in the group"))
       end
    end
 end
 
-function listperm(x::GAPGroupElem)
+function listperm(x::PermGroupElem)
    return [x(i) for i in 1:x.par.deg]
 end
 
-function gens(G::GAPGroup)
-   L=GAP.Globals.GeneratorsOfGroup(G.X)
-   l=length(L)
-   return [GAPGroupElem(L[i],G) for i in 1:l]
+function gens(G::Group)
+   L = GAP.Globals.GeneratorsOfGroup(G.X)
+   res = Vector{elem_type(G)}(undef, length(L))
+   for i = 1:length(res)
+     res[i] = group_element(G, L[i])
+   end
+   return res
 end
 
-function gens(G::GAPGroup, i::Integer)
-   L=GAP.Globals.GeneratorsOfGroup(G.X)
-   return GAPGroupElem(L[i],G)
+function gens(G::Group, i::Integer)
+   L = GAP.Globals.GeneratorsOfGroup(G.X)
+   return group_element(G, L[i])
 end
 
-ngens(G::GAPGroup) = length(gens(G))
+ngens(G::Group) = length(gens(G))
 
-Base.:sign(x::GAPGroupElem) = GAP.Globals.SignPerm(x.X)
+Base.:sign(x::PermGroupElem) = GAP.Globals.SignPerm(x.X)
 
-Base.:isless(x::GAPGroupElem, y::GAPGroupElem) = x<y
+#Base.:isless(x::GAPGroupElem, y::GAPGroupElem) = x<y
 
 #embedding of a permutation in permutation group
-function (G::GAPGroup)(x::GAPGroupElem)
+function (G::PermGroup)(x::PermGroupElem)
    if !GAP.Globals.IN(x.X,G.X)
       throw(ArgumentError("the element does not embed in the group"))
    end
@@ -287,12 +350,13 @@ function (G::GAPGroup)(x::GAPGroupElem)
 end
 
 #evaluation function
-function (x::GAPGroupElem)(n)
+function (x::PermGroupElem)(n)
    return GAP.Globals.OnPoints(n,x.X)
 end
 
 include("./sub.jl")
 
+<<<<<<< HEAD
 function conjugate_subgroup(G::T, x::GroupElem) where T<:Group
   return T(GAP.Globals.ConjugateSubgroup(G.X,x.X))
 end
@@ -426,5 +490,7 @@ function is_conjugate(G::Group, H::Group, K::Group)
    else
       return false, nothing
    end
+=======
+>>>>>>> 50b2268fd6683a7f9dc0e998ec907b7d01510c1b
 end
 
