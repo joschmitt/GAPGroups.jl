@@ -167,14 +167,7 @@ end
 
 
 
-function _get_type(G::GapObj)
-  for i = 1:length(gap_group_types)
-    if gap_group_types[i][1](G)
-      return gap_group_types[i][2]
-    end
-  end
-  error("Not a known type of group")
-end
+
 
 function quo(G::T, H::T) where T <: Group
   mp = GAP.Globals.NaturalHomomorphismByNormalSubgroup(G.X, H.X)

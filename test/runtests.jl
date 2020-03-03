@@ -1,60 +1,56 @@
 using GAPGroups
 using Test
 
-#to be modified once defined the new type
-GG=GAPGroups.GAPGroup
-GGE=GAPGroups.GAPGroupElem
-
 
 function test_properties(n::Int64)
 
-   G= @inferred GG symmetric_group(n)
+   G= @inferred PermGroup symmetric_group(n)
    @testset "The group Sym($n)" begin
-      @test deg(G) isa Integer
-      @test deg(G) == n
-      @test hasorder(G) isa Bool
-      @test hasorder(G)
+      @test degree(G) isa Integer
+      @test degree(G) == n
+      @test isfinite(G)
       @test order(G) isa Int64
-      if n<13 @test order(Int32, G) isa Int32 end
+      if n < 13 
+        @test order(Int32, G) isa Int32 
+      end
       @test order(G) == factorial(n)
       @test order(BigInt, G) == factorial(n)
-      @test length(G) == order(G)
-      @test typeof(G)==GG
-      @test hasgens(G) isa Bool
-      @test hasgens(G)
-      @test gens(G) isa Vector{GGE}
+      @test gens(G) isa Vector{PermGroupElem}
    end
 end
 
 function test_iterate(n::Int64)
-   if 3<n && n<11          # otherwise the group is too big
-   @testset "Iteration" begin
-      G=symmetric_group(n)
-      L=collect(G)
-      @test L isa Vector{GGE}
+  if n > 3 && n < 11          # otherwise the group is too big
+    @testset "Iteration" begin
+      G = symmetric_group(n)
+      L = elements(G)
+      @test L isa Vector{PermGroupElem}
       @test length(L) == factorial(G.deg)
       @test length(unique(L)) == factorial(G.deg)
-      @test rand(G) isa GGE
+      @test rand(G) isa PermGroupElem
       @test rand(G) in G
-      A=[]
-      for x in G   A=vcat(A,[x])   end
+      A = PermGroup[]
+      for x in G
+        push!(A, x)
+      end
       @test length(A) == factorial(G.deg)
       @test length(unique(A)) == factorial(G.deg)
-      @test Set(A) == Set(L)
-      s=0         # check if the number of (n-1)-cycles is correct
+      s = 0         # check if the number of (n-1)-cycles is correct
       for x in G 
-         if order(x)==(n-1)  s+=1  end
+        if order(x) == (n-1)
+          s+=1
+        end
       end
       @test s == factorial(n-2)*n
-   end
-   end
+    end
+  end
 end
 
 function explicit_example(n::Int64)
 
-   if n>9
-   G=symmetric_group(n)
-   @testset "Explicit example" begin
+  if n > 9
+    G=symmetric_group(n)
+    @testset "Explicit example" begin
       x=cperm(1:5,6:8,9:n)
       A=vcat([i for i in 10:n],[9])
       A=vcat([2,3,4,5,1,7,8,6],A)
@@ -93,7 +89,7 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
    @testset "Elements of Sym($i)" for i in L
       if i>1
       G=symmetric_group(i)
-      x=@inferred GGE rand(G)
+      x=@inferred PermGroupElem rand(G)
       y=rand(G)
       #z=cperm(1:i)
       z=perm(vcat([j for j in 2:i],[1]))
@@ -106,7 +102,7 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
       oy=order(y)
       oz=order(z)
 
-      @test x isa GGE
+      @test x isa PermGroupElem
       @test ox isa Int64
       @test sign(z)==(-1)^(i-1)
       @test sign(x*y)==sign(x)*sign(y)

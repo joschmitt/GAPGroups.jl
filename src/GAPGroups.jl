@@ -33,19 +33,111 @@ function group_element(G::MatrixGroup, x::GapObj)
   return MatrixGroupElem(G, x)
 end
 
+################################################################################
+#
+#  Some basic constructors
+#  
+################################################################################
+
 function symmetric_group(n::Int64)
-   if n<1
-     throw(ArgumentError("it must be a positive integer"))
-   end
-   return PermGroup(GAP.Globals.SymmetricGroup(n), n)
+  if n < 1
+    throw(ArgumentError("it must be a positive integer"))
+  end
+  return PermGroup(GAP.Globals.SymmetricGroup(n), n)
+end
+
+function symmetric_group(::Type{T}, n::Int) where T <: Group
+  if n < 1
+    throw(ArgumentError("n must be a positive integer"))
+  end
+  return T(GAP.Globals.SymmetricGroup(_get_gap_function(T), n))
 end
 
 function alternating_group(n::Int64)
-  if n<1
+  if n < 1
     throw(ArgumentError("it must be a positive integer"))
   end
   return PermGroup(GAP.Globals.AlternatingGroup(n), n)
 end
+
+function alternating_group(::Type{T}, n::Int) where T <: Group
+  if n < 1
+    throw(ArgumentError("it must be a positive integer"))
+  end
+  return T(GAP.Globals.AlternatingGroup(_get_gap_function(T), n))
+end
+
+function small_group(n::Int, m::Int)
+  return PolycyclicGroup(GAP.Globals.SmallGroup(n, m))
+end
+
+function cyclic_group(n::Int)
+  return PolycyclicGroup(GAP.Globals.CyclicGroup(n))
+end
+
+function cyclic_group(::Type{T}, n::Int) where T <: Group
+  return T(GAP.Globals.CyclicGroup(_get_gap_function(T), n))
+end
+
+function abelian_group(v::Vector{Int})
+  for i = 1:length(v)
+    iszero(v[i]) && error("Cannot represent an infinite group as a polycyclic group")
+  end
+  v1 = GAP.julia_to_gap(v)
+  return PolycyclicGroup(GAP.Globals.AbelianGroup(v1))
+end
+
+function abelian_group(::Type{T}, v::Vector{Int]) where T <: Group
+  v1 = GAP.julia_to_gap(v)
+  return T(GAP.Globals.AbelianGroup(_get_gap_function(T), v1))
+end
+
+function mathieu_group(n::Int)
+  @assert n in Int[9, 10, 11, 12, 21, 22, 23, 24]
+  return PermGroup(GAP.Globals.MathieuGroup(n), n)
+end
+
+function free_abelian_group(n::Int)
+  return FPGroup(GAP.Globals.FreeAbelianGroup(n))
+end
+
+function dihedral_group(n::Int)
+  @assert iseven(n)
+  return PolycyclicGroup(GAP.Globals.DihedralGroup(n))
+end
+
+function dihedral_group(::Type{T}, n::Int) where T <: Group
+  @assert iseven(n)
+  return T(GAP.Globals.DihedralGroup(_get_gap_function(T), n))
+end
+
+function quaternion_group(n::Int)
+  return PolycyclicGroup(GAP.Globals.QuaternionGroup(n))
+end
+
+function quaternion_group(::Type{T}, n::Int) where T <: Group 
+  @assert divisible(n, 4)
+  return T(GAP.Globals.QuaternionGroup(_get_gap_function(T)), n)
+end
+
+
+function GL(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.GL(n, q))
+end
+
+function GL(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.GL(_get_gap_function(T),n, q))
+end
+
+function SL(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.SL(n, q))
+end
+
+function SL(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.SL(_get_gap_function(T), n, q))
+end
+
+
 
 
 function elements(G::T) where T <: Group
