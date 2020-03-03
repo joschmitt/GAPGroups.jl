@@ -358,5 +358,141 @@ end
 
 include("./sub.jl")
 
+<<<<<<< HEAD
+function conjugate_subgroup(G::T, x::GroupElem) where T<:Group
+  return T(GAP.Globals.ConjugateSubgroup(G.X,x.X))
+end
+
+################################################################################
+#
+# cosets and double cosets
+#
+################################################################################
+
+# T=type of the group, S=type of the element
+mutable struct GroupCoset{T,S} where {T<:Group, S<:GroupElem}
+   X::T
+   H::T
+   repr::S
+   right::String     # says if the coset is left or right
+   coset::GapObj
+end
+
+function right_coset(H::Group,g::GroupElem)
+   if !GAP.Globals.IsSubset(parent(g).X,H.X)
+      throw(ArgumentError("H is not a subgroup of parent(g)"))
+   end
+   return GroupCoset(parent(g),H,g,"right",GAP.Globals.RightCoset(H.X,g.X))
+end
+
+acting_domain(C::GroupCoset) = C.H
+
+representative(C::GroupCoset) = C.repr
+
+function elements(C::GroupCoset)
+   L=GAP.gap_to_julia(GAP.Globals.AsList(C.coset))
+   return elem_type(C.X)[group_element(C.X,x) for x in L]
+end
+
+order(C::GroupCoset) = GAP.Globals.Size(C.coset)
+
+is_bicoset(C::GroupCoset) = GAP.Globals.IsBiCoset(C.coset)
+
+function coset_decomposition(G::T, H::T) where T<:Group
+   L=GAP.Globals.CosetDecomposition(G.X,H.X)
+   return T[[group_element(G.X,x) for x in GAP.gap_to_julia(J)] for J in GAP.gap_to_julia(L)]
+end
+
+function right_transversal(G::T, H::T) where T<:Group
+   L=GAP.Globals.RightTransversal(G.X,H.X)
+   return T[group_elem(G.X,x) for x in GAP.gap_to_julia(L)]
+end
+
+# T=type of the group, S=type of the element
+mutable struct GroupDoubleCoset{T,S} where {T<:Group, S<:GroupElem}
+   X::T
+   G::T
+   H::T
+   repr::S
+   coset::GapObj
+end
+
+function double_coset(G::Group, g::GroupElem, H::Group)
+   if !GAP.Globals.IsSubset(parent(g).X,G.X)
+      throw(ArgumentError("G is not a subgroup of parent(g)"))
+   end
+   if !GAP.Globals.IsSubset(parent(g).X,H.X)
+      throw(ArgumentError("H is not a subgroup of parent(g)"))
+   end
+   return GroupDoubleCoset(parent(g),G,H,g,GAP.Globals.DoubleCoset(G,g,H))
+end
+
+function elements(C::GroupDoubleCoset)
+   L=GAP.gap_to_julia(GAP.Globals.AsList(C.coset))
+   return elem_type(C.X)[group_element(C.X,x) for x in L]
+end
+
+order(C::Union{GroupCoset,GroupDoubleCoset}) = GAP.Globals.Size(C.coset)
+
+rand(C::Union{GroupCoset,GroupDoubleCoset}) = group_element(C.X, GAP.Globals.Random(C.coset))
+
+################################################################################
+#
+#   Conjugacy Classes
+#
+################################################################################
+
+struct GroupConjClass{T,S} where {T<:Group, S<:GroupElem}
+   X::T
+   repr::S
+   CC::GapObj
+end
+
+conjugacy_class(G::Group, g::GroupElem) = GroupConjClass(G,g,GAP.Globals.ConjugacyClass(G.X,g.X))
+
+order(C::GroupConjClass) = GAP.Globals.Size(C.CC)
+
+rand(C::GroupConjClass) = group_elem(C.X,GAP.Globals.Random(C.CC))
+
+function elements(C::GroupConjClass)
+   L=GAP.gap_to_julia(GAP.Globals.AsList(C.CC))
+   return elem_type(C.X)[group_element(C.X,x) for x in L]
+end
+
+representative(C::GroupConjClass) = C.repr
+
+function conjugacy_classes(G::Group)
+   L=GAP.gap_to_julia(GAP.Globals.ConjugacyClasses(G.X))
+   return [GroupConjClass(G,group_element(G,GAP.Globals.Representative(cc)),cc) for cc in L]
+end
+
+rand(C::GroupConjClass) = group_element(C.X, GAP.Globals.Random(C.CC))
+
+nr_conjugacy_classes(G::Group) = GAP.Globals.NrConjugacyClasses(G.X)
+
+Base.:^(x::GroupElem, y::Integer) = group_element(x.parent, x.X ^ y)
+
+Base.:^(x::GroupElem, y::GroupElem) = group_element(x.parent, x.X ^ y.X)
+
+Base.:^(H::Group, y::GroupElem) = typeof(H)(H.X ^ y.X)
+
+# for elements
+function is_conjugate(G::Group, x::GroupElem, y::GroupElem)
+   if GAP.Globals.IsConjugate(G.X, x.X, y.X)
+      return true, group_element(G,GAP.Globals.RepresentativeAction(G.X, x.X, y.X))
+   else
+      return false, nothing
+   end
+end
+
+# for subgroups
+function is_conjugate(G::Group, H::Group, K::Group)
+   if GAP.Globals.IsConjugate(G.X, H.X, K.X)
+      return true, typeof(G)(GAP.Globals.RepresentativeAction(G.X, x.X, y.X))
+   else
+      return false, nothing
+   end
+=======
+>>>>>>> 50b2268fd6683a7f9dc0e998ec907b7d01510c1b
 end
 
