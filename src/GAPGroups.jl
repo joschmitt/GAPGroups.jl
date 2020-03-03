@@ -369,7 +369,7 @@ end
 ################################################################################
 
 # T=type of the group, S=type of the element
-mutable struct GroupCoset{T,S} where {T<:Group, S<:GroupElem}
+mutable struct GroupCoset{T<: Group, S <: GroupElem} 
    X::T
    H::T
    repr::S
@@ -377,11 +377,12 @@ mutable struct GroupCoset{T,S} where {T<:Group, S<:GroupElem}
    coset::GapObj
 end
 
-function right_coset(H::Group,g::GroupElem)
-   if !GAP.Globals.IsSubset(parent(g).X,H.X)
+function right_coset(H::Group, g::GroupElem)
+   @assert elem_type(H) == typeof(g)
+   if !GAP.Globals.IsSubset(parent(g).X, H.X)
       throw(ArgumentError("H is not a subgroup of parent(g)"))
    end
-   return GroupCoset(parent(g),H,g,"right",GAP.Globals.RightCoset(H.X,g.X))
+   return GroupCoset(parent(g), H, g, "right", GAP.Globals.RightCoset(H.X,g.X))
 end
 
 acting_domain(C::GroupCoset) = C.H
@@ -408,7 +409,7 @@ function right_transversal(G::T, H::T) where T<:Group
 end
 
 # T=type of the group, S=type of the element
-mutable struct GroupDoubleCoset{T,S} where {T<:Group, S<:GroupElem}
+mutable struct GroupDoubleCoset{T <: Group, S <: GroupElem}
    X::T
    G::T
    H::T
@@ -441,7 +442,7 @@ rand(C::Union{GroupCoset,GroupDoubleCoset}) = group_element(C.X, GAP.Globals.Ran
 #
 ################################################################################
 
-struct GroupConjClass{T,S} where {T<:Group, S<:GroupElem}
+struct GroupConjClass{T<:Group, S<:GroupElem}
    X::T
    repr::S
    CC::GapObj
@@ -491,5 +492,7 @@ function is_conjugate(G::Group, H::Group, K::Group)
    else
       return false, nothing
    end
+end
+
 end
 
