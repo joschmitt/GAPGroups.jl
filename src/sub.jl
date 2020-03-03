@@ -1,9 +1,12 @@
 function Base.show(io::IO, x::GAPGroupHomomorphism)
-  print(io, "Group homomorphism from
-  \n $(domain(x)) \n to \n $(codomain(x))\n")
+  print(io, "Group homomorphism from \n")
+  println(io, domain(x))
+  print(io, "to\n")
+  println(io, codomain(x))
 end
 
 function hom(G::Group, H::Group, img::Function)
+  
   #I create the gap function from the julia function
   #The julia function is supposed to be defined on GAPGroupElem
   #We need a function defined on the underlying GapObj
@@ -12,14 +15,14 @@ function hom(G::Group, H::Group, img::Function)
     img_el = img(el)
     return img_el.X  
   end
-  return GAPGroupHomomorphism(G, H, GAP.julia_to_gap(gap_fun))
+  return GAPGroupHomomorphism{typeof(G), typeof(H)}(G, H, GAP.julia_to_gap(gap_fun))
 end
 
 function hom(G::Group, H::Group, gensG::Vector, imgs::Vector)
-  vgens = GAP.julia_to_gap([x.X for x in gensG])
-  vimgs = GAP.julia_to_gap([x.X for x in imgs])
+  vgens = GAP.julia_to_gap(GapObj[x.X for x in gensG])
+  vimgs = GAP.julia_to_gap(GapObj[x.X for x in imgs])
   mp = GAP.Globals.GroupHomomorphismByImages(G.X, H.X, vgens, vimgs)
-  return GAPGroupHomomorphisms(G, H, mp)
+  return GAPGroupHomomorphism{typeof(G), typeof(H)}(G, H, mp)
 end
 
 function domain(f::GAPGroupHomomorphism)
@@ -32,15 +35,15 @@ end
 
 (f::GAPGroupHomomorphism)(x::GroupElem) = image(f, x)
 
+function image(f::GAPGroupHomomorphism, x::GroupElem)
+  return group_element(codomain(f), f.image(x.X))
+end
+
 ################################################################################
 #
 #  Image, Kernel, Cokernel
 #
 ################################################################################
-
-function image(f::GAPGroupHomomorphism, x::GroupElem)
-  return group_element(codomain(f), f.image(x.X))
-end
 
 function kernel(f::GAPGroupHomomorphism)
   K = GAP.Globals.Kernel(f.image)
@@ -65,7 +68,7 @@ end
 
 function __as_subgroup(H::GapObj, G::T, ::Type{S}) where { T, S }
   function img(x::S)
-    return group_element(G, x)
+    return group_element(G, x.X)
   end
   H1 = T(H)
   return H1, hom(H1, G, img)
@@ -102,11 +105,31 @@ end
 #
 ###############################################################################
 
-function normal_subgroups(G::Group)
+function normal_subgroups(G::T) where T <: Group
   nsubs = GAP.gap_to_julia(GAP.Globals.NormalSubgroups(G.X))
-  res = Vector{Tuple{GAPGroup, GAPGroupHomomorphism}}(undef, length(nsubs))
+  res = Vector{Tuple{typeof(G), GAPGroupHomomorphism{typeof(G), typeof(G)}}}(undef, length(nsubs))
   for i = 1:length(res)
     N = nsubs[i]
+    res[i] = _as_subgroup(N, G)
+  end
+  return res
+end
+
+function subgroups(G::T) where T <: Group
+  subs = GAP.gap_to_julia(GAP.Globals.AllSubgroups(G.X))
+  res = Vector{Tuple{typeof(G), GAPGroupHomomorphism{typeof(G), typeof(G)}}}(undef, length(subs))
+  for i = 1:length(res)
+    N = subs[i]
+    res[i] = _as_subgroup(N, G)
+  end
+  return res
+end
+
+function conjugacy_classes_subgroups(G::T) where T <: Group
+  subs = GAP.gap_to_julia(GAP.Globals.ConjugacyClassesSubgroups(G.X))
+  res = Vector{Tuple{typeof(G), GAPGroupHomomorphism{typeof(G), typeof(G)}}}(undef, length(subs))
+  for i = 1:length(res)
+    N = GAP.Globals.Representative(subs[i])
     res[i] = _as_subgroup(N, G)
   end
   return res
@@ -164,10 +187,6 @@ function quo(G::T, elements::Vector{S}) where T <: Group where S <: GroupElem
   H1 = T(H)
   return quo(G, H)
 end
-
-
-
-
 
 function quo(G::T, H::T) where T <: Group
   mp = GAP.Globals.NaturalHomomorphismByNormalSubgroup(G.X, H.X)

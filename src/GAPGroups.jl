@@ -87,7 +87,7 @@ function abelian_group(v::Vector{Int})
   return PolycyclicGroup(GAP.Globals.AbelianGroup(v1))
 end
 
-function abelian_group(::Type{T}, v::Vector{Int]) where T <: Group
+function abelian_group(::Type{T}, v::Vector{Int}) where T <: Group
   v1 = GAP.julia_to_gap(v)
   return T(GAP.Globals.AbelianGroup(_get_gap_function(T), v1))
 end
@@ -228,8 +228,8 @@ Base.:one(x::Group) = group_element(x, GAP.Globals.Identity(x.X))
 Base.:one(x::GroupElem) = one(parent(x))
 one!(x::GroupElem) = one(parent(x))
 
-Base.:show(io::IO, x::GroupElem) =  print(GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
-Base.:show(io::IO, x::Group) = print(GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
+Base.:show(io::IO, x::GroupElem) =  print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
+Base.:show(io::IO, x::Group) = print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
 
 Base.:isone(x::GroupElem) = x == one(parent(x))
 
@@ -335,6 +335,8 @@ end
 
 ngens(G::Group) = length(gens(G))
 
+
+Base.getindex(G::Group, i::Int) = gens(G, i)
 Base.:sign(x::PermGroupElem) = GAP.Globals.SignPerm(x.X)
 
 #Base.:isless(x::GAPGroupElem, y::GAPGroupElem) = x<y
