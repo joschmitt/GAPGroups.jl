@@ -356,7 +356,6 @@ end
 
 include("./sub.jl")
 
-<<<<<<< HEAD
 function conjugate_subgroup(G::T, x::GroupElem) where T<:Group
   return T(GAP.Globals.ConjugateSubgroup(G.X,x.X))
 end
@@ -490,7 +489,5 @@ function is_conjugate(G::Group, H::Group, K::Group)
    else
       return false, nothing
    end
-=======
->>>>>>> 50b2268fd6683a7f9dc0e998ec907b7d01510c1b
 end
 
