@@ -1,7 +1,4 @@
 # further possible functions: similar, iterate, literal_pow, parent_type
-
-module GAPGroups
-
 using GAP
 
 import Base.==
@@ -16,56 +13,120 @@ import Base.collect
 export symmetric_group, order, perm, cperm, hasorder, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm
      #conj!, conj
 
-struct GAPGroup
+
+abstract type Group end
+
+abstract type GroupElem end
+
+struct PermGroup <: Group
    X::GapObj
-   deg::Int64       # G = Sym(deg)
+   deg::Int64       # G < Sym(deg)
+   
+   function PermGroup(G::GapObj)
+     n = GAP.gap_to_julia(Int64, GAP.Globals.LargestMovedPoint(G))
+     z = new(G, n)
+     return z
+   end
+   
+   function PermGroup(G::GapObj, deg::Int)
+     z = new(G, deg)
+     return z
+   end
 end
 
-mutable struct GAPGroupElem
+mutable struct PermGroupElem <: GroupElem
+   parent::PermGroup
+   X::GapObj   
+end
+
+struct MatrixGroup <: Group
+  X::GapObj
+end
+
+mutable struct MatrixGroupElem <: GroupElem
+   parent::GAPGroup
+   X::GapObj       
+end
+
+struct PolycyclicGroup <: Group
+  X::GapObj
+end
+
+mutable struct PolycyclicGroupElem <: GroupElem
+   parent::GAPGroup
    X::GapObj
-   par::GAPGroup       # Sym(par) = parent of the object
+end
+
+struct FPGroup <: Group
+  X::GapObj
+end
+
+mutable struct FPGroupElem <: GroupElem
+   parent::GAPGroup
+   X::GapObj
+end
+
+elem_type(::PermGroup) = PermGroupElem
+elem_type(::MatrixGroup) = MatrixGroupElem
+elem_type(::FPGroup) = FPGroupElem
+elem_type(::PolycyclicGroup) = PolycyclicGroupElem
+
+
+function group_element(G::PermGroup, x::GapObj)
+  return PermGroupElem(G, x)
+end
+
+function group_element(G::MatrixGroup, x::GapObj)
+  return MatrixGroupElem(G, x)
 end
 
 function symmetric_group(n::Int64)
    if n<1
      throw(ArgumentError("it must be a positive integer"))
-   else
-      return GAPGroup(GAP.Globals.SymmetricGroup(n),n)
    end
+   return PermGroup(GAP.Globals.SymmetricGroup(n), n)
+end
+
+function alternating_group(n::Int64)
+  if n<1
+    throw(ArgumentError("it must be a positive integer"))
+  end
+  return PermGroup(GAP.Globals.AlternatingGroup(n), n)
+end
+
+
+function elements(G::T) where T <: Group
+  els = GAP.gap_to_julia(GAP.Globals.Elements(G.X))
+  elems = Vector{elem_type(G)}(undef, length(els))
+  i = 1
+  for x in els
+    elems[i] = group_element(G, x)
+    i += 1
+  end
+  return elems
 end
 
 # to be fixed later
-Base.:hash(x::GAPGroupElem) = 0
+Base.:hash(x::GroupElem) = 0
 
 #shorter writing
 #Base.:parent(x::GAPGroupElem) = x==one(symmetric_group(2)) ? symmetric_group(1) : symmetric_group(GAP.Globals.LargestMovedPointPerm(x.X))
 
-#=
 function parent(x::GAPGroupElem)
-   if x==one(symmetric_group(1))
-      n = 1
-   else
-      n = GAP.Globals.LargestMovedPointPerm(x.X)
-   end
-   return symmetric_group(n)
+  return x.parent
 end
-=#
 
-parent(x::GAPGroupElem) = x.par
 
-Base.:eltype(::Type{G}) where G<:GAPGroup = GAPGroup
-Base.:eltype(::Type{G}) where G<:GAPGroupElem = GAPGroupElem
-
-function deg(x::GAPGroup)
+function degree(x::PermGroup)
    return x.deg
 end
 
-function order(x::GAPGroup)
-   return factorial(x.deg)
+function order(x::Group)
+   return GAP.gap_to_julia(GAP.Globals.Size(x.X))
 end
 
-function order(x::GAPGroupElem)
-   return GAP.Globals.Order(x.X)
+function order(x::GroupElem)
+   return GAP.gap_to_julia(GAP.Globals.Order(x.X))
 end
 
 function order(::Type{T}, x::Union{GAPGroupElem, GAPGroup}) where T<:Number
@@ -75,12 +136,11 @@ end
 Base.:length(x::GAPGroup) = order(x)
 
 function rand(x::GAPGroup)
-   s=GAP.Globals.Random(x.X)
-   return GAPGroupElem(s,x)
+   s = GAP.Globals.Random(x.X)
+   return group_elem(x, s)
 end
 
 # one of the following should be non-parametric
-elem_type(G::GAPGroup) = GAPGroupElem
 rand_pseudo(G::GAPGroup) = rand(G)
 
 # maxgroup (Sym(n), Sym(m)) = Sym( max(m,n)); it serves for operations between different groups
@@ -229,4 +289,5 @@ function (x::GAPGroupElem)(n)
    return GAP.Globals.OnPoints(n,x.X)
 end
 
-end
+include("./sub.jl")
+
