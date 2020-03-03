@@ -175,7 +175,9 @@ function cperm(L::Union{Array{Int64,1},UnitRange{Int64}}...)
    if length(L)==0
       return one(symmetric_group(1))
    else
-      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))),symmetric_group(maximum(y))) for y in L])
+      x=GAP.Globals.Product(GAP.julia_to_gap([GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))) for y in L]))
+      return GAPGroupElem(x, symmetric_group(maximum([maximum(y) for y in L])))
+#      return prod([GAPGroupElem(GAP.Globals.CycleFromList(GAP.julia_to_gap(collect(y))),symmetric_group(maximum(y))) for y in L])
    end
 end
 
