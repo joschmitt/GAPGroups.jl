@@ -84,6 +84,10 @@ function small_groups_id(G::Group)
   return GAP.gap_to_julia(GAP.gap_to_julia(r))
 end
 
+function transitive_group(n::Int, m::Int)
+  return PermGroup(GAP.Globals.TransitiveGroup(n, m))
+end
+
 function cyclic_group(n::Int)
   return PolycyclicGroup(GAP.Globals.CyclicGroup(n))
 end

@@ -7,12 +7,14 @@ struct PermGroup <: Group
    deg::Int64       # G < Sym(deg)
    
    function PermGroup(G::GapObj)
+     @assert GAP.Globals.IsPermGroup(G)
      n = GAP.gap_to_julia(Int64, GAP.Globals.LargestMovedPoint(G))
      z = new(G, n)
      return z
    end
    
    function PermGroup(G::GapObj, deg::Int)
+     @assert GAP.Globals.IsPermGroup(G)
      z = new(G, deg)
      return z
    end
@@ -25,6 +27,11 @@ end
 
 struct MatrixGroup <: Group
   X::GapObj
+  function MatrixGroup(G::GapObj)
+    @assert GAP.Globals.IsMatrixGroup(G)
+    z = new(G)
+    return z
+  end
 end
 
 mutable struct MatrixGroupElem <: GroupElem
@@ -34,6 +41,11 @@ end
 
 struct PolycyclicGroup <: Group
   X::GapObj
+  function PolycyclicGroup(G::GapObj)
+    @assert GAP.Globals.IsPolycyclicGroup(G)
+    z = new(G)
+    return z
+  end
 end
 
 mutable struct PolycyclicGroupElem <: GroupElem
@@ -43,6 +55,12 @@ end
 
 struct FPGroup <: Group
   X::GapObj
+  
+  function FPGroup(G::GapObj)
+    @assert GAP.Globals.IsFpGroup(G)
+    z = new(G)
+    return z
+  end
 end
 
 mutable struct FPGroupElem <: GroupElem
