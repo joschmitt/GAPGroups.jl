@@ -329,6 +329,7 @@ end
 #
 ################################################################################
 
+#To be done properly
 function wreath_product(G::Group, H::PermGroup)
   wGH = GAP.Globals.WreathProduct(G, H)
   T = _get_type(wGH)

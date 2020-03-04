@@ -308,7 +308,7 @@ function iterate(G::Group, state)
     return nothing
   end
   i = GAP.Globals.NextIterator(state)
-  return group_element(G, i), state
+  return group_element(G, i), smtate
 end
 
 function collect(G::Group)
@@ -491,7 +491,7 @@ end
 
 Base.:show(io::IO, x::GroupConjClass) = print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.repr))," ^ ",GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
 
-function _conjugacy_class(G, g, cc::GAPobj)         # function for assignment
+function _conjugacy_class(G, g, cc::GapObj)         # function for assignment
   return GroupConjClass{typeof(G), typeof(g)}(G, g, cc)
 end
 
@@ -520,7 +520,7 @@ function conjugacy_classes(G::Group)
    return GroupConjClass{typeof(G), elem_type(G)}[ _conjugacy_class(G,group_element(G,GAP.Globals.Representative(cc)),cc) for cc in L]
 end
 
-rand(C::GroupConjClass{S,T}) where S where T<:GroupElement = group_element(C.X, GAP.Globals.Random(C.CC))
+rand(C::GroupConjClass{S,T}) where S where T<:GroupElem = group_element(C.X, GAP.Globals.Random(C.CC))
 
 Base.:^(x::GroupElem, y::GroupElem) = group_element(_maxgroup(parent(x), parent(y)), x.X ^ y.X)
 
@@ -552,6 +552,15 @@ function conjugacy_classes_subgroups(G::Group)
    return GroupConjClass{typeof(G), typeof(G)}[ _conjugacy_class(G,typeof(G)(GAP.Globals.Representative(cc)),cc) for cc in L]
 end
 
+function conjugacy_classes_maximal_subgroups(G::Group)
+  lS = GAP.Globals.ConjugacyClassesMaximalSubgroups(G.X)
+  res = Vector{GroupConjClass{typeof(G), elem_type(G)}}(undef, length(lS))
+  for i = 1:length(res)
+    res[i] = _conjugacy_class(G, typeof(G)(GAP.Globals.Representative(cc)), ls[i])
+  end
+  return res
+end
+
 Base.:^(H::Group, y::GroupElem) = typeof(H)(H.X ^ y.X)
 
 function is_conjugate(G::Group, H::Group, K::Group)
@@ -561,6 +570,7 @@ function is_conjugate(G::Group, H::Group, K::Group)
       return false, nothing
    end
 end
+
 # END subgroups conjugation
 
 
