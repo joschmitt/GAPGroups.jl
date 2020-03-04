@@ -95,7 +95,7 @@ end
 
 function preimage(f::GAPGroupHomomorphism{S, T}, H::S) where S <: Group where T <: Group
   H1 = GAP.Globals.PreImage(f.image, H.X)
-  return _as_subgroup(H1, codomain(f)
+  return _as_subgroup(H1, codomain(f))
 end
 
 ################################################################################
