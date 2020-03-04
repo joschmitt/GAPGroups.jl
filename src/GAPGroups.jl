@@ -219,6 +219,8 @@ function order(::Type{T}, x::Union{GroupElem, Group}) where T<:Number
    return T(order(x))
 end
 
+Base.:exponent(x::Group) = GAP.Globals.Exponent(x.X)
+
 #Base.:length(x::Group) = order(x)
 
 function rand(x::Group)
@@ -420,6 +422,8 @@ function right_coset(H::Group, g::GroupElem)
    return GroupCoset(parent(g), H, g, "right", GAP.Globals.RightCoset(H.X,g.X))
 end
 
+Base.:show(io::IO, x::GroupCoset) =  print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.H)), " * ", GAP.gap_to_julia(GAP.Globals.StringView(x.repr)))
+
 acting_domain(C::GroupCoset) = C.H
 
 representative(C::GroupCoset) = C.repr
@@ -452,6 +456,8 @@ mutable struct GroupDoubleCoset{T <: Group, S <: GroupElem}
    coset::GapObj
 end
 
+Base.:show(io::IO, x::GroupDoubleCoset) =  print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.G)), " * ", GAP.gap_to_julia(GAP.Globals.StringView(x.repr)), " * ", GAP.gap_to_julia(GAP.Globals.StringView(x.H)))
+
 function double_coset(G::Group, g::GroupElem, H::Group)
    if !GAP.Globals.IsSubset(parent(g).X,G.X)
       throw(ArgumentError("G is not a subgroup of parent(g)"))
@@ -482,6 +488,8 @@ struct GroupConjClass{T<:Group, S<:Union{GroupElem,Group}}
    repr::S
    CC::GapObj
 end
+
+Base.:show(io::IO, x::GroupConjClass) = print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.repr))," ^ ",GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
 
 function _conjugacy_class(G, g, cc::GAPobj)         # function for assignment
   return GroupConjClass{typeof(G), typeof(g)}(G, g, cc)
@@ -553,8 +561,8 @@ function is_conjugate(G::Group, H::Group, K::Group)
       return false, nothing
    end
 end
-
 # END subgroups conjugation
+
 
 ################################################################################
 #
@@ -653,10 +661,6 @@ end
 # Some Properties
 #
 ################################################################################
-
-iscyclic(G::Group) = GAP.Globals.IsCyclic(G.X)
-
-isabelian(G::Group) = GAP.Globals.IsAbelian(G.X)
 
 isperfect(G::Group) = GAP.Globals.IsPerfectGroup(G.X)
 
