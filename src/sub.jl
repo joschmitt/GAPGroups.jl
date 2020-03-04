@@ -5,6 +5,24 @@ function Base.show(io::IO, x::GAPGroupHomomorphism)
   println(io, codomain(x))
 end
 
+Base.:*(f::GAPGroupHomomorphism{S, T}, g::GAPGroupHomomorphism{T, U}) where S where T where U = compose(f, g)
+
+function compose(f::GAPGroupHomomorphism{S, T}, g::GAPGroupHomomorphism{T, U}) where S where T where U
+  dom = domain(f)
+  cod = codomain(g)
+  @assert codomain(f) == domain(g)
+  mp = GAP.Globals.Compose(f.image, g.image)
+  return GAPGroupHomomorphism{S, U}(dom, cod, mp)
+end
+
+function id_hom(G::Group)
+  return hom(G, G, x -> x)
+end
+
+function trivial_morphism(G::Group, H::Group)
+  return hom(G, H, x -> one(H))
+end
+
 function hom(G::Group, H::Group, img::Function)
   
   #I create the gap function from the julia function
@@ -15,7 +33,8 @@ function hom(G::Group, H::Group, img::Function)
     img_el = img(el)
     return img_el.X  
   end
-  return GAPGroupHomomorphism{typeof(G), typeof(H)}(G, H, GAP.julia_to_gap(gap_fun))
+  mp = GAP.Globals.GroupHomomorphismByFunction(G.X, H.X, GAP.julia_to_gap(gap_fun))
+  return GAPGroupHomomorphism{typeof(G), typeof(H)}(G, H, mp)
 end
 
 function hom(G::Group, H::Group, gensG::Vector, imgs::Vector)
@@ -55,9 +74,28 @@ function image(f::GAPGroupHomomorphism)
   return _as_subgroup(K, codomain(f))
 end
 
+function image(f::GAPGroupHomomorphism{S, T}, H::S) where S <: Group where T <: Group
+  H1 = GAP.Globals.Image(H.X)
+  return _as_subgroup(H1, codomain(f))
+end
+
 function cokernel(f::GAPGroupHomomorphism)
   K, mK = image(f)
   return quo(codomain(f), K)
+end
+
+function haspreimage(f::GAPGroupHomomorphism, x::GroupElem)
+  r = GAP.Globals.PreImagesRepresentative(f.image, x.X)
+  if r == GAP.Globals.fail
+    return false, one(domain(f))
+  else
+    return true, group_elem(domain(f), r)
+  end
+end
+
+function preimage(f::GAPGroupHomomorphism{S, T}, H::S) where S <: Group where T <: Group
+  H1 = GAP.Globals.PreImage(f.image, H.X)
+  return _as_subgroup(H1, codomain(f)
 end
 
 ################################################################################
@@ -205,3 +243,40 @@ function __create_fun(mp, codom, ::Type{S}) where S
   end
   return mp_julia
 end
+
+################################################################################
+#
+#  Derived subgroup and derived series
+#  
+################################################################################
+
+function derived_subgroup(G::Group)
+  H = GAP.Globals.DerivedSubgroup(G.X)
+  return _as_subgroup(H, G)
+end
+
+function derived_series(G::Group)
+  L = GAP.Globals.DerivedSeries(G.X)
+  res = Vector{Tuple{typeof(G), GAPGroupHomomorphism}}(undef, length(L))
+  for i = 1:length(res)
+    res[i] = _as_subgroup(L[i], G)    
+  end
+  return res
+end
+
+################################################################################
+#
+#  IsIsomorphic
+#
+################################################################################
+
+function isisomorphic(G::Group, H::Group)
+  mp = GAP.Globals.IsomorphismGroups(G.X, H.X)
+  if mp == GAP.Globals.fail
+    return false, trivial_morphism(G, H)
+  else
+    return true, hom(G, H, x -> group_element(H, GAP.Globals.Image(mp, x.X)))
+  end
+end
+
+

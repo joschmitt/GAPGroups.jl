@@ -53,6 +53,10 @@ function symmetric_group(::Type{T}, n::Int) where T <: Group
   return T(GAP.Globals.SymmetricGroup(_get_gap_function(T), n))
 end
 
+function issymmetric_group(G::Group)
+  return GAP.Globals.IsSymmetricGroup(G.X)
+end
+
 function alternating_group(n::Int64)
   if n < 1
     throw(ArgumentError("it must be a positive integer"))
@@ -67,8 +71,17 @@ function alternating_group(::Type{T}, n::Int) where T <: Group
   return T(GAP.Globals.AlternatingGroup(_get_gap_function(T), n))
 end
 
+function isalternating_group(G::Group)
+  return GAP.Globals.IsAlternatingGroup(G.X)
+end
+
 function small_group(n::Int, m::Int)
   return PolycyclicGroup(GAP.Globals.SmallGroup(n, m))
+end
+
+function small_groups_id(G::Group)
+  r = GAP.Globals.IdGroup(G.X)
+  return GAP.gap_to_julia(GAP.gap_to_julia(r))
 end
 
 function cyclic_group(n::Int)
@@ -77,6 +90,10 @@ end
 
 function cyclic_group(::Type{T}, n::Int) where T <: Group
   return T(GAP.Globals.CyclicGroup(_get_gap_function(T), n))
+end
+
+function iscyclic(G::Group)
+  return GAP.Globals.IsCyclic(G.X)
 end
 
 function abelian_group(v::Vector{Int})
@@ -90,6 +107,10 @@ end
 function abelian_group(::Type{T}, v::Vector{Int}) where T <: Group
   v1 = GAP.julia_to_gap(v)
   return T(GAP.Globals.AbelianGroup(_get_gap_function(T), v1))
+end
+
+function isabelian(G::Group)
+  return GAP.Globals.IsAbelian(G.X)
 end
 
 function mathieu_group(n::Int)
@@ -111,13 +132,22 @@ function dihedral_group(::Type{T}, n::Int) where T <: Group
   return T(GAP.Globals.DihedralGroup(_get_gap_function(T), n))
 end
 
+function isdihedral_group(G::Group)
+  return GAP.Globals.IsDihedralGroup(G.X)
+end
+
 function quaternion_group(n::Int)
+  @assert divisible(n, 4)
   return PolycyclicGroup(GAP.Globals.QuaternionGroup(n))
 end
 
 function quaternion_group(::Type{T}, n::Int) where T <: Group 
   @assert divisible(n, 4)
   return T(GAP.Globals.QuaternionGroup(_get_gap_function(T)), n)
+end
+
+function isquaternion_group(G::Group)
+  return GAP.Globals.IsQuaternionGroup(G.X)
 end
 
 
@@ -261,17 +291,20 @@ comm(x::GroupElem, y::GroupElem) = x^-1*x^y
 comm!(out::GroupElem, x::GroupElem, y::GroupElem) = x^-1*x^y
 
 function iterate(G::Group)
-   L=GAP.Globals.List(G.X)
-   len=length(L)
-   iszero(len) && return nothing
-   return group_elem(G, L[1]), (1,len)
+  L=GAP.Globals.Iterator(G.X)
+  if GAP.Globals.IsDoneIterator(L)
+    return nothing
+  end
+  i = GAP.Globals.NextIterator(L)
+  return group_element(G, i), L
 end
 
 function iterate(G::Group, state)
-   L = GAP.Globals.List(G.X)
-   s,len = state
-   s == len && return nothing
-   return group_elem(G, L[s+1]), (s+1,len)
+  if GAP.Globals.IsDoneIterator(state)
+    return nothing
+  end
+  i = GAP.Globals.NextIterator(state)
+  return group_element(G, i), state
 end
 
 function collect(G::Group)
