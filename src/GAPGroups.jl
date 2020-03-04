@@ -507,7 +507,7 @@ function conjugacy_class(G::Group, g::GroupElem)
 end
 
 function rand(C::GroupConjClass{S,T}) where S where T<:GroupElem
-   return group_element(C.X,GAP.Globals.Random(C.CC))
+   return group_element(C.X, GAP.Globals.Random(C.CC))
 end
 
 function elements(C::GroupConjClass{S, T}) where S where T<:GroupElem
@@ -519,8 +519,6 @@ function conjugacy_classes(G::Group)
    L=GAP.gap_to_julia(GAP.Globals.ConjugacyClasses(G.X))
    return GroupConjClass{typeof(G), elem_type(G)}[ _conjugacy_class(G,group_element(G,GAP.Globals.Representative(cc)),cc) for cc in L]
 end
-
-rand(C::GroupConjClass{S,T}) where S where T<:GroupElem = group_element(C.X, GAP.Globals.Random(C.CC))
 
 Base.:^(x::GroupElem, y::GroupElem) = group_element(_maxgroup(parent(x), parent(y)), x.X ^ y.X)
 
