@@ -239,8 +239,6 @@ inv!(out::GroupElem, x::GroupElem) = inv(x)  #if needed later
 
 Base.:^(x::GroupElem, y::Integer) = group_element(parent(x), x.X ^ y)
 
-Base.:^(x::GroupElem, y::GroupElem) = group_element(_maxgroup(parent(x), parent(y), x.X ^ y.X))
-
 #Is this useful?
 #Base.:<(x::GroupElem, y::GroupElem) = x.X < y.X
 
@@ -405,7 +403,7 @@ end
 
 function right_transversal(G::T, H::T) where T<:Group
    L=GAP.Globals.RightTransversal(G.X,H.X)
-   return T[group_elem(G.X,x) for x in GAP.gap_to_julia(L)]
+   return T[group_element(G.X,x) for x in GAP.gap_to_julia(L)]
 end
 
 # T=type of the group, S=type of the element
@@ -442,41 +440,45 @@ rand(C::Union{GroupCoset,GroupDoubleCoset}) = group_element(C.X, GAP.Globals.Ran
 #
 ################################################################################
 
-struct GroupConjClass{T<:Group, S<:GroupElem}
+struct GroupConjClass{T<:Group, S<:Union{GroupElem,Group}}
    X::T
    repr::S
    CC::GapObj
 end
 
-conjugacy_class(G::Group, g::GroupElem) = GroupConjClass(G,g,GAP.Globals.ConjugacyClass(G.X,g.X))
+function _conjugacy_class(G, g, cc::GAPobj)         # function for assignment
+  return GroupConjClass{typeof(G), typeof(g)}(G, g, cc)
+end
 
 order(C::GroupConjClass) = GAP.Globals.Size(C.CC)
 
-rand(C::GroupConjClass) = group_elem(C.X,GAP.Globals.Random(C.CC))
+representative(C::GroupConjClass) = C.repr
 
-function elements(C::GroupConjClass)
-   L=GAP.gap_to_julia(GAP.Globals.AsList(C.CC))
-   return elem_type(C.X)[group_element(C.X,x) for x in L]
+number_conjugacy_classes(G::Group) = GAP.Globals.NrConjugacyClasses(G.X)
+
+# START elements conjugation
+function conjugacy_class(G::Group, g::GroupElem)
+   return _conjugacy_class(G, g, GAP.Globals.ConjugacyClass(G.X,g.X))
 end
 
-representative(C::GroupConjClass) = C.repr
+function rand(C::GroupConjClass{S,T}) where S where T<:GroupElem
+   return group_element(C.X,GAP.Globals.Random(C.CC))
+end
+
+function elements(C::GroupConjClass{S, T}) where S where T<:GroupElem
+   L=GAP.gap_to_julia(GAP.Globals.AsList(C.CC))
+   return T[group_element(C.X,x) for x in L]
+end
 
 function conjugacy_classes(G::Group)
    L=GAP.gap_to_julia(GAP.Globals.ConjugacyClasses(G.X))
-   return [GroupConjClass(G,group_element(G,GAP.Globals.Representative(cc)),cc) for cc in L]
+   return GroupConjClass{typeof(G), elem_type(G)}[ _conjugacy_class(G,group_element(G,GAP.Globals.Representative(cc)),cc) for cc in L]
 end
 
-rand(C::GroupConjClass) = group_element(C.X, GAP.Globals.Random(C.CC))
+rand(C::GroupConjClass{S,T}) where S where T<:GroupElement = group_element(C.X, GAP.Globals.Random(C.CC))
 
-nr_conjugacy_classes(G::Group) = GAP.Globals.NrConjugacyClasses(G.X)
+Base.:^(x::GroupElem, y::GroupElem) = group_element(_maxgroup(parent(x), parent(y)), x.X ^ y.X)
 
-Base.:^(x::GroupElem, y::Integer) = group_element(x.parent, x.X ^ y)
-
-Base.:^(x::GroupElem, y::GroupElem) = group_element(x.parent, x.X ^ y.X)
-
-Base.:^(H::Group, y::GroupElem) = typeof(H)(H.X ^ y.X)
-
-# for elements
 function is_conjugate(G::Group, x::GroupElem, y::GroupElem)
    if GAP.Globals.IsConjugate(G.X, x.X, y.X)
       return true, group_element(G,GAP.Globals.RepresentativeAction(G.X, x.X, y.X))
@@ -484,11 +486,150 @@ function is_conjugate(G::Group, x::GroupElem, y::GroupElem)
       return false, nothing
    end
 end
+# END elements conjugation 
 
-# for subgroups
+# START subgroups conjugation
+function conjugacy_class(G::Group, g::Group)
+   return _conjugacy_class{typeof(G), typeof(g)}(G, g, GAP.Globals.ConjugacyClassSubgroups(G.X,g.X))
+end
+
+function rand(C::GroupConjClass{S,T}) where S where T<:Group
+   return T(GAP.Globals.Random(C.CC))
+end
+
+function elements(C::GroupConjClass{S, T}) where S where T<:Group
+   L=GAP.gap_to_julia(GAP.Globals.AsList(C.CC))
+   return T[T(x) for x in L]
+end
+
+function conjugacy_classes_subgroups(G::Group)
+   L=GAP.gap_to_julia(GAP.Globals.ConjugacyClassesSubgroups(G.X))
+   return GroupConjClass{typeof(G), typeof(G)}[ _conjugacy_class(G,typeof(G)(GAP.Globals.Representative(cc)),cc) for cc in L]
+end
+
+Base.:^(H::Group, y::GroupElem) = typeof(H)(H.X ^ y.X)
+
 function is_conjugate(G::Group, H::Group, K::Group)
    if GAP.Globals.IsConjugate(G.X, H.X, K.X)
-      return true, typeof(G)(GAP.Globals.RepresentativeAction(G.X, x.X, y.X))
+      return true, group_element(G,GAP.Globals.RepresentativeAction(G.X, H.X, K.X))
+   else
+      return false, nothing
+   end
+end
+
+# END subgroups conjugation
+
+################################################################################
+#
+# Normal Structure
+#
+################################################################################
+
+normalizer(G::T, H::T) where T<:Group = _as_subgroup(GAP.Globals.Normalizer(G.X,H.X),G)
+
+normalizer(G::Group, x::GroupElem) = _as_subgroup(GAP.Globals.Normalizer(G.X,x.X),G)
+
+normaliser = normalizer
+
+core(G::T, H::T) where T<:Group = _as_subgroup(GAP.Globals.Core(G.X,H.X),G)
+
+# normal_closure(G::T, H::T) where T<:Group = T(GAP.Globals.NormalClosure(G.X,H.X))
+# we don't know how G,H embeds into N_C(G,H) 
+
+function pcore(G::Group, p::Int64)
+   if !GAP.Globals.IsPrime(p)
+      throw(ArgumentError("p is not a prime"))
+   end
+   return _as_subgroup(GAP.Globals.PCore(G.X,p),G)
+end
+
+
+
+################################################################################
+#
+# Specific Subgroups
+#
+################################################################################
+
+# commutator_subgroup(G::T, H::T) where T<:Group = T(GAP.Globals.CommutatorSubgroup(G.X,H.X))
+# we don't know how G,H embed into [G,H]
+
+fitting_subgroup(G::Group) = _as_subgroup(GAP.Globals.FittingSubgroup(G.X),G)
+
+frattini_subgroup(G::Group) = _as_subgroup(GAP.Globals.FrattiniSubgroup(G.X),G)
+
+radical_subgroup(G::Group) = _as_subgroup(GAP.Globals.RadicalGroup(G.X),G)
+
+socle(G::Group) = _as_subgroup(GAP.Globals.Socle(G.X),G)
+
+
+
+################################################################################
+#
+# Sylow & Hall Subgroups
+#
+################################################################################
+
+
+function sylow_subgroup(G::Group, p::Int64)
+   if !GAP.Globals.IsPrime(p)
+      throw(ArgumentError("p is not a prime"))
+   end
+   return _as_subgroup(GAP.Globals.SylowSubgroup(G.X),G)
+end
+
+function hall_subgroup(G::Group, P::Array{Int64})
+   noprime=false
+   for p in P
+      if !GAP.Globals.IsPrime(p)
+         noprime=true
+         break
+      end
+   end
+   if noprime throw(ArgumentError("The integers must be prime")) end
+   if !issolvable(G) throw(ArgumentError("The group is not solvable")) end
+   return _as_subgroup(GAP.Globals.HallSubgroup(G.X,GAP.julia_to_gap(P)),G)
+end
+
+function sylow_system(G::Group)
+   if !issolvable(G) throw(ArgumentError("The group is not solvable")) end
+   L=GAP.gap_to_julia(GAP.Globals.SylowSystem(G.X))
+   return typeof(G)[_as_subgroup(G,x) for x in L]
+end
+
+function complement_system(G::Group)
+   if !issolvable(G) throw(ArgumentError("The group is not solvable")) end
+   L=GAP.gap_to_julia(GAP.Globals.ComplementSystem(G.X))
+   return typeof(G)[_as_subgroup(G,x) for x in L]
+end
+
+function hall_system(G::Group)
+   if !issolvable(G) throw(ArgumentError("The group is not solvable")) end
+   L=GAP.gap_to_julia(GAP.Globals.HallSystem(G.X))
+   return typeof(G)[_as_subgroup(G,x) for x in L]
+end
+
+
+
+################################################################################
+#
+# Some Properties
+#
+################################################################################
+
+iscyclic(G::Group) = GAP.Globals.IsCyclic(G.X)
+
+isabelian(G::Group) = GAP.Globals.IsAbelian(G.X)
+
+isperfect(G::Group) = GAP.Globals.IsPerfectGroup(G.X)
+
+issimple(G::Group) = GAP.Globals.IsSimpleGroup(G.X)
+
+isalmostsimple(G::Group) = GAP.Globals.IsAlmostSimpleGroup(G.X)
+
+function ispgroup(G::Group)
+   if GAP.Globals.IsPGroup(G.X)
+      return true, PrimePGroup(G.X)
    else
       return false, nothing
    end
