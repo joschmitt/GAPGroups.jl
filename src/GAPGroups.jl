@@ -22,7 +22,7 @@ include("./types.jl")
 elem_type(::PermGroup) = PermGroupElem
 elem_type(::MatrixGroup) = MatrixGroupElem
 elem_type(::FPGroup) = FPGroupElem
-elem_type(::PolycyclicGroup) = PolycyclicGroupElem
+elem_type(::PcGroup) = PcGroupElem
 
 
 function group_element(G::PermGroup, x::GapObj)
@@ -76,7 +76,7 @@ function isalternating_group(G::Group)
 end
 
 function small_group(n::Int, m::Int)
-  return PolycyclicGroup(GAP.Globals.SmallGroup(n, m))
+  return PcGroup(GAP.Globals.SmallGroup(n, m))
 end
 
 function small_groups_id(G::Group)
@@ -89,7 +89,7 @@ function transitive_group(n::Int, m::Int)
 end
 
 function cyclic_group(n::Int)
-  return PolycyclicGroup(GAP.Globals.CyclicGroup(n))
+  return PcGroup(GAP.Globals.CyclicGroup(n))
 end
 
 function cyclic_group(::Type{T}, n::Int) where T <: Group
@@ -105,7 +105,7 @@ function abelian_group(v::Vector{Int})
     iszero(v[i]) && error("Cannot represent an infinite group as a polycyclic group")
   end
   v1 = GAP.julia_to_gap(v)
-  return PolycyclicGroup(GAP.Globals.AbelianGroup(v1))
+  return PcGroup(GAP.Globals.AbelianGroup(v1))
 end
 
 function abelian_group(::Type{T}, v::Vector{Int}) where T <: Group
@@ -128,7 +128,7 @@ end
 
 function dihedral_group(n::Int)
   @assert iseven(n)
-  return PolycyclicGroup(GAP.Globals.DihedralGroup(n))
+  return PcGroup(GAP.Globals.DihedralGroup(n))
 end
 
 function dihedral_group(::Type{T}, n::Int) where T <: Group
@@ -142,7 +142,7 @@ end
 
 function quaternion_group(n::Int)
   @assert divisible(n, 4)
-  return PolycyclicGroup(GAP.Globals.QuaternionGroup(n))
+  return PcGroup(GAP.Globals.QuaternionGroup(n))
 end
 
 function quaternion_group(::Type{T}, n::Int) where T <: Group 

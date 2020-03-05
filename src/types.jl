@@ -39,17 +39,17 @@ mutable struct MatrixGroupElem <: GroupElem
    X::GapObj       
 end
 
-struct PolycyclicGroup <: Group
+struct PcGroup <: Group
   X::GapObj
   function PolycyclicGroup(G::GapObj)
-    @assert GAP.Globals.IsPolycyclicGroup(G)
+    @assert GAP.Globals.IsPcGroup(G)
     z = new(G)
     return z
   end
 end
 
-mutable struct PolycyclicGroupElem <: GroupElem
-   parent::PolycyclicGroup
+mutable struct PcGroupElem <: GroupElem
+   parent::PcGroup
    X::GapObj
 end
 
@@ -68,9 +68,24 @@ mutable struct FPGroupElem <: GroupElem
    X::GapObj
 end
 
+mutable struct AutomorphismGroup{T} <: Group
+  X::GapObj
+  G::T
+  function AutomorphismGroup{T}(G::GapObj, H::T) where T
+    @assert GAP.Globals.IsAutomorphismGroup(G)
+    z = new{T}(G, H)
+    return z
+  end
+end
+
+mutable struct AutomorphismGroupElem{T} <: GroupElem
+   parent::AutomorphismGroup{T}
+   X::GapObj
+end
+
 
 const gap_group_types = 
-[(GAP.Globals.IsPermGroup, PermGroup), (GAP.Globals.IsPcGroup, PolycyclicGroup), 
+[(GAP.Globals.IsPermGroup, PermGroup), (GAP.Globals.IsPcGroup, PcGroup), 
  (GAP.Globals.IsMatrixGroup, MatrixGroup), (GAP.Globals.IsFpGroup, FPGroup)               
 ]
 
