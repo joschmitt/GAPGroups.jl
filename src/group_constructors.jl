@@ -4,9 +4,9 @@
 #  
 ################################################################################
 
-export symmetric_group, alternating_group, small_group, small_group_id, transitive_group,
+export symmetric_group, alternating_group, small_group, small_groups_id, transitive_group,
        cyclic_group, abelian_group, mathieu_group, free_abelian_group, dihedral_group,
-       quaternion_group, GL, SL
+       quaternion_group, GL, SL, isquaternion_group
 
 
 function symmetric_group(n::Int64)

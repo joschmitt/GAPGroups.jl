@@ -88,13 +88,15 @@ end
 
 
 const gap_group_types = 
-[(GAP.Globals.IsPermGroup, PermGroup), (GAP.Globals.IsPcGroup, PcGroup), 
- (GAP.Globals.IsMatrixGroup, MatrixGroup), (GAP.Globals.IsFpGroup, FPGroup)               
+[(:(GAPGroups.GAP.Globals.IsPermGroup), PermGroup), (:(GAPGroups.GAP.Globals.IsPcGroup), PcGroup), 
+ (:(GAPGroups.GAP.Globals.IsMatrixGroup), MatrixGroup), (:(GAPGroups.GAP.Globals.IsFpGroup), FPGroup)               
 ]
+
+
 
 function _get_type(G::GapObj)
   for i = 1:length(gap_group_types)
-    if gap_group_types[i][1](G)
+    if eval(gap_group_types[i][1])(G)
       return gap_group_types[i][2]
     end
   end
@@ -104,7 +106,7 @@ end
 function _get_gap_function(T)
   for i = 1:length(gap_group_types)
     if gap_group_types[i][2] == T
-      return gap_group_types[i][1]
+      return eval(gap_group_types[i][1])
     end
   end
   error("Not a known type of group")

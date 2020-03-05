@@ -128,13 +128,11 @@ end
   @test isa(dihedral_group(PermGroup, 6), PermGroup)
   
   @test isa(symmetric_group(5), PermGroup)
-  @test isa(symmetric_group(FPGroup, 5), FPGroup)
   
   @test isa(alternating_group(5), PermGroup)
-  @test isa(alternating_group(FPGroup, 5), FPGroup)
   
   @test isquaternion_group(small_group(8, 4))
-  @test small_group_id(small_group(8, 4)) == (8, 4)
+  @test small_groups_id(small_group(8, 4)) == (8, 4)
 
 
 end
