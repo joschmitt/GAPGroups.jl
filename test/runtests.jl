@@ -2,94 +2,85 @@ using GAPGroups
 using Test
 
 
-function test_properties(n::Int64)
+@testset "The group Sym(n)" begin
 
-   G= @inferred PermGroup symmetric_group(n)
-   @testset "The group Sym($n)" begin
-      @test degree(G) isa Integer
-      @test degree(G) == n
-      @test isfinite(G)
-      @test order(G) isa Int64
-      if n < 13 
-        @test order(Int32, G) isa Int32 
-      end
-      @test order(G) == factorial(n)
-      @test order(BigInt, G) == factorial(n)
-      @test gens(G) isa Vector{PermGroupElem}
-   end
-end
-
-function test_iterate(n::Int64)
-  if n > 3 && n < 11          # otherwise the group is too big
-    @testset "Iteration" begin
-      G = symmetric_group(n)
-      L = elements(G)
-      @test L isa Vector{PermGroupElem}
-      @test length(L) == factorial(G.deg)
-      @test length(unique(L)) == factorial(G.deg)
-      @test rand(G) isa PermGroupElem
-      @test rand(G) in G
-      A = PermGroup[]
-      for x in G
-        push!(A, x)
-      end
-      @test length(A) == factorial(G.deg)
-      @test length(unique(A)) == factorial(G.deg)
-      s = 0         # check if the number of (n-1)-cycles is correct
-      for x in G 
-        if order(x) == (n-1)
-          s+=1
-        end
-      end
-      @test s == factorial(n-2)*n
+  for n = 5:8
+    G = @inferred symmetric_group(n)
+    @test degree(G) isa Integer
+    @test degree(G) == n
+    @test GAPGroups.isfinite(G)
+    @test order(G) isa Int64
+    if n < 13 
+      @test order(Int32, G) isa Int32 
     end
+    @test order(G) == factorial(n)
+    @test order(BigInt, G) == factorial(n)
+    @test gens(G) isa Vector{PermGroupElem}
   end
 end
 
-function explicit_example(n::Int64)
-
-  if n > 9
-    G=symmetric_group(n)
-    @testset "Explicit example" begin
-      x=cperm(1:5,6:8,9:n)
-      A=vcat([i for i in 10:n],[9])
-      A=vcat([2,3,4,5,1,7,8,6],A)
-      y=perm(A)
-
-      @test x==y
-      @test A==listperm(y)
-      @test x==perm(listperm(x))
-      @test order(x) == lcm(15,n-8)
-      @test x(3)==4
-      @test x(8)==6
-      @test x(n)==9
-   end
-   @testset "Change of parent" begin
-      x=cperm(1:5,6:8,9:n)
-      H=symmetric_group(n+3)
-      K=symmetric_group(n-1)
-      
-      @test parent(x)==G
-      x=cperm(H,1:5,6:8,9:n)
-      @test parent(x)===H
-      x=cperm(G,1:5,6:8,9:n)
-      @test_throws ArgumentError x=cperm(K,1:5,6:8,9:n)
-      @test parent(x)===G
-      @test parent(H(x))==H
-      @test parent(H(x))===H
-      @test parent(x)!=H
-      x=H(x)
-      @test parent(x)===H
-      @test_throws ArgumentError K(x)
-   end
-   end
+@testset "Iteration" begin
+  for n = 4:6
+    G = symmetric_group(n)
+    L = elements(G)
+    @test L isa Vector{PermGroupElem}
+    @test length(L) == factorial(G.deg)
+    @test length(unique(L)) == factorial(G.deg)
+    @test rand(G) isa PermGroupElem
+    @test rand(G) in G
+    A = PermGroupElem[]
+    for x in G
+      push!(A, x)
+    end
+    @test length(A) == factorial(G.deg)
+    s = 0         # check if the number of (n-1)-cycles is correct
+    for x in G 
+      if order(x) == (n-1)
+        s+=1
+      end
+    end
+    @test s == factorial(n-2)*n
+  end
 end
+
+@testset "Permutations" begin
+  for n = 10:13
+    x=cperm(1:5,6:8,9:n)
+    A=vcat([i for i in 10:n],[9])
+    A=vcat([2,3,4,5,1,7,8,6],A)
+    y=perm(A)
+
+    @test x==y
+    @test A==listperm(y)
+    @test x==perm(listperm(x))
+    @test order(x) == lcm(15,n-8)
+    @test x(3)==4
+    @test x(8)==6
+    @test x(n)==9
+  end
+end
+ 
+@testset "Change of parent" begin
+  for n = 10:12
+    H = symmetric_group(n+3)
+    K = symmetric_group(n-1)
+    x = cperm(H, 1:5,6:8,9:n)
+    @test parent(x)===H
+    @test_throws ArgumentError cperm(K,1:5,6:8,9:n)
+    y = H(x)
+    @test parent(y) == H
+    @test parent(y) === H
+    @test parent(x) === H
+    @test_throws ArgumentError K(x)
+  end
+end
+
 
 function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
    @testset "Elements of Sym($i)" for i in L
       if i>1
       G=symmetric_group(i)
-      x=@inferred PermGroupElem rand(G)
+      x=@inferred rand(G)
       y=rand(G)
       #z=cperm(1:i)
       z=perm(vcat([j for j in 2:i],[1]))
@@ -98,7 +89,7 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
       else
          w=cperm([1,2])
       end
-      ox= @inferred Int64 order(x)
+      ox= @inferred order(x)
       oy=order(y)
       oz=order(z)
 
@@ -130,5 +121,21 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
       @test y==perm(listperm(y))
       end
    end
+end
+
+@testset "Special Constructors" begin
+  @test isa(dihedral_group(6), PcGroup)
+  @test isa(dihedral_group(PermGroup, 6), PermGroup)
+  
+  @test isa(symmetric_group(5), PermGroup)
+  @test isa(symmetric_group(FPGroup, 5), FPGroup)
+  
+  @test isa(alternating_group(5), PermGroup)
+  @test isa(alternating_group(FPGroup, 5), FPGroup)
+  
+  @test isquaternion_group(small_group(8, 4))
+  @test small_group_id(small_group(8, 4)) == (8, 4)
+
+
 end
 

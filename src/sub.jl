@@ -167,16 +167,6 @@ function subgroups(G::T) where T <: Group
   return res
 end
 
-function conjugacy_classes_subgroups(G::T) where T <: Group
-  subs = GAP.gap_to_julia(GAP.Globals.ConjugacyClassesSubgroups(G.X))
-  res = Vector{Tuple{typeof(G), GAPGroupHomomorphism{typeof(G), typeof(G)}}}(undef, length(subs))
-  for i = 1:length(res)
-    N = GAP.Globals.Representative(subs[i])
-    res[i] = _as_subgroup(N, G)
-  end
-  return res
-end
-
 function center(G::Group)
   Z = GAP.Globals.Center(G.X)
   return _as_subgroup(Z, G)
