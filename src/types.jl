@@ -44,11 +44,7 @@ end
 
 struct PcGroup <: Group
   X::GapObj
-<<<<<<< HEAD
   function PcGroup(G::GapObj)
-=======
-  function PolycyclicGroup(G::GapObj)
->>>>>>> c1f114d390bf038031ce4c98f4f8c92eac47a804
     @assert GAP.Globals.IsPcGroup(G)
     z = new(G)
     return z
