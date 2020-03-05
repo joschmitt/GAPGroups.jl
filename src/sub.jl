@@ -130,6 +130,13 @@ function sub(G::T, elements::Vector{S}) where T <: Group where S <: GroupElem
   return _as_subgroup(H, G)
 end
 
+function sub(L::GroupElem...)
+   if length(L)==0 throw(ArgumentError("Empty list")) end
+   l=collect(L)
+   @assert all(x -> parent(x) == parent(l[1]), l)
+   return sub(parent(l[1]),l)
+end
+
 ###############################################################################
 #
 #  Index
@@ -137,7 +144,7 @@ end
 ###############################################################################
 
 function index(G::Group, H::Group)
-  i = index(G.X, H.X)
+  i = GAP.Globals.Index(G.X, H.X)
   return GAP.gap_to_julia(i)
 end
 
@@ -162,16 +169,6 @@ function subgroups(G::T) where T <: Group
   res = Vector{Tuple{typeof(G), GAPGroupHomomorphism{typeof(G), typeof(G)}}}(undef, length(subs))
   for i = 1:length(res)
     N = subs[i]
-    res[i] = _as_subgroup(N, G)
-  end
-  return res
-end
-
-function conjugacy_classes_subgroups(G::T) where T <: Group
-  subs = GAP.gap_to_julia(GAP.Globals.ConjugacyClassesSubgroups(G.X))
-  res = Vector{Tuple{typeof(G), GAPGroupHomomorphism{typeof(G), typeof(G)}}}(undef, length(subs))
-  for i = 1:length(res)
-    N = GAP.Globals.Representative(subs[i])
     res[i] = _as_subgroup(N, G)
   end
   return res

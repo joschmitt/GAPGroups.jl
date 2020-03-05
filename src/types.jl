@@ -86,7 +86,7 @@ end
 function _get_gap_function(T)
   for i = 1:length(gap_group_types)
     if gap_group_types[i][2] == T
-      return gap_group_types[1][1]
+      return gap_group_types[i][1]
     end
   end
   error("Not a known type of group")

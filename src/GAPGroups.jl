@@ -8,6 +8,7 @@ using GAP
 import Base.==
 import Base.rand
 import Base.conj
+import Base.show
 import Base.conj!
 import Base.parent
 import Base.eltype
@@ -422,7 +423,22 @@ function right_coset(H::Group, g::GroupElem)
    return GroupCoset(parent(g), H, g, "right", GAP.Globals.RightCoset(H.X,g.X))
 end
 
-Base.:show(io::IO, x::GroupCoset) =  print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.H)), " * ", GAP.gap_to_julia(GAP.Globals.StringView(x.repr)))
+function left_coset(H::Group, g::GroupElem)
+   @assert elem_type(H) == typeof(g)
+   if !GAP.Globals.IsSubset(parent(g).X, H.X)
+      throw(ArgumentError("H is not a subgroup of parent(g)"))
+   end
+   return GroupCoset(parent(g), H, g, "left", GAP.Globals.RightCoset(GAP.Globals.ConjugateSubgroup(H.X,GAP.Globals.Inverse(g.X)),g.X))
+end
+
+function show(io::IO, x::GroupCoset)
+   if x.right == "right"
+      print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.H.X))*" * "*GAP.gap_to_julia(GAP.Globals.StringView(x.repr.X)))
+   else
+      print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.repr.X))*" * "*GAP.gap_to_julia(GAP.Globals.StringView(x.H.X)))
+   end
+   return nothing
+end
 
 acting_domain(C::GroupCoset) = C.H
 
@@ -447,6 +463,8 @@ function right_transversal(G::T, H::T) where T<:Group
    return T[group_element(G.X,x) for x in GAP.gap_to_julia(L)]
 end
 
+left_transversal = right_transversal
+
 # T=type of the group, S=type of the element
 mutable struct GroupDoubleCoset{T <: Group, S <: GroupElem}
    X::T
@@ -456,7 +474,7 @@ mutable struct GroupDoubleCoset{T <: Group, S <: GroupElem}
    coset::GapObj
 end
 
-Base.:show(io::IO, x::GroupDoubleCoset) =  print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.G)), " * ", GAP.gap_to_julia(GAP.Globals.StringView(x.repr)), " * ", GAP.gap_to_julia(GAP.Globals.StringView(x.H)))
+Base.:show(io::IO, x::GroupDoubleCoset) =  print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.G.X))*" * "*GAP.gap_to_julia(GAP.Globals.StringView(x.repr.X))*" * "*GAP.gap_to_julia(GAP.Globals.StringView(x.H.X)))
 
 function double_coset(G::Group, g::GroupElem, H::Group)
    if !GAP.Globals.IsSubset(parent(g).X,G.X)
@@ -489,7 +507,7 @@ struct GroupConjClass{T<:Group, S<:Union{GroupElem,Group}}
    CC::GapObj
 end
 
-Base.:show(io::IO, x::GroupConjClass) = print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.repr))," ^ ",GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
+Base.:show(io::IO, x::GroupConjClass) = print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.repr))*" ^ "*GAP.gap_to_julia(GAP.Globals.StringView(x.X)))
 
 function _conjugacy_class(G, g, cc::GapObj)         # function for assignment
   return GroupConjClass{typeof(G), typeof(g)}(G, g, cc)
@@ -639,6 +657,7 @@ function hall_subgroup(G::Group, P::Array{Int64})
          break
       end
    end
+   if length(P) != length(Set(P)) noprime=true end        # avoid repetitions in P
    if noprime throw(ArgumentError("The integers must be prime")) end
    if !issolvable(G) throw(ArgumentError("The group is not solvable")) end
    return _as_subgroup(GAP.Globals.HallSubgroup(G.X,GAP.julia_to_gap(P)),G)
