@@ -62,6 +62,18 @@ function image(f::GAPGroupHomomorphism, x::GroupElem)
   return group_element(codomain(f), f.image(x.X))
 end
 
+function issurjective(f::GAPGroupHomomorphism)
+  return GAP.Globals.IsSurjective(f.image)
+end
+
+function isinjective(f::GAPGroupHomomorphism)
+  return GAP.Globals.IsInjective(f.image)
+end
+
+function isinvertible(f::GAPGroupHomomorphism)
+  return GAP.Globals.IsBijective(f.image)
+end
+
 ################################################################################
 #
 #  Image, Kernel, Cokernel
@@ -326,3 +338,57 @@ function wreath_product(G::Group, H::PermGroup)
   return T(wGH)
 end
 
+
+################################################################################
+#
+#  Automorphism Group
+#
+################################################################################
+
+function automorphism_group(G::Group)
+  AutGAP = GAP.Globals.AutomorphismGroup(G.X)
+  return AutomorphismGroup{typeof(G)}(AutGAP, G)
+end
+
+function hom(x::AutomorphismGroupElem)
+  A = parent(x)
+  G = A.G
+  return _hom_from_gap_map(G, G, x)
+end
+
+(f::AutomorphismGroupElem)(x::GroupElem) = apply_automorphism(f, x)
+
+function apply_automorphism(f::AutomorphismGroupElem{T}, x::GroupElem; check = true) where T <: Group
+  A = parent(f)
+  G = parent(x)
+  if check
+    @assert A.G == G || GAP.Globals.IN(x.X, A.G.X) "Not in the domain of f!"
+  end
+  return typeof(x)(G, f.X(x.X))
+end
+
+function inner_automorphism(g::GroupElem)
+  return _hom_from_gap_map(parent(g), parent(g), GAP.Globals.ConjugatorAutomorphism(parent(g).X, g.X))
+end
+
+
+function isinner_automorphism(f::GAPGroupHomomorphism)
+  @assert domain(f) == codomain(f) "Not an automorphism!"
+  return GAP.Globals.IsInnerAutomorphism(f.image)
+end
+
+function isinvariant(f::GAPGroupHomomorphism, H::Group)
+  @assert domain(f) == codomain(f) "Not an automorphism!"
+  @assert GAP.Globals.IsSubset(codomain(f).X, H.X) "Not a subgroup of the domain"
+  return GAP.Globals.Image(f.image, H.X) == H.X
+end
+
+function induced_automorphism(f::GAPGroupHomomorphism, mH::GAPGroupHomomorphism)
+  @assert isinvariant(f, kernel(mH)[1]) "The kernel is not invariant under f!"
+  map = GAP.Globals.InducedAutomorphism(mH.image, f.image)
+  return _hom_from_gap_map(codomain(mH), codomain(mH), map)
+end
+
+function restrict_automorphism(f::GAPGroupHomomorphism, H::Group)
+  return _hom_from_gap_map(H, H, f.image)
+end

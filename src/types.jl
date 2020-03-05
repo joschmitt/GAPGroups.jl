@@ -44,7 +44,11 @@ end
 
 struct PcGroup <: Group
   X::GapObj
+<<<<<<< HEAD
   function PcGroup(G::GapObj)
+=======
+  function PolycyclicGroup(G::GapObj)
+>>>>>>> c1f114d390bf038031ce4c98f4f8c92eac47a804
     @assert GAP.Globals.IsPcGroup(G)
     z = new(G)
     return z
@@ -68,6 +72,21 @@ end
 
 mutable struct FPGroupElem <: GroupElem
    parent::FPGroup
+   X::GapObj
+end
+
+mutable struct AutomorphismGroup{T} <: Group
+  X::GapObj
+  G::T
+  function AutomorphismGroup{T}(G::GapObj, H::T) where T
+    @assert GAP.Globals.IsAutomorphismGroup(G)
+    z = new{T}(G, H)
+    return z
+  end
+end
+
+mutable struct AutomorphismGroupElem{T} <: GroupElem
+   parent::AutomorphismGroup{T}
    X::GapObj
 end
 
