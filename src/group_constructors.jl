@@ -142,3 +142,26 @@ function SL(::Type{T}, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.SL(_get_gap_function(T), n, q))
 end
 
+function Sp(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.Sp(n, q))
+end
+
+function Sp(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.Sp(_get_gap_function(T), n, q))
+end
+
+function GU(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.GU(n, q))
+end
+
+function GU(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.GU(_get_gap_function(T), n, q))
+end
+
+function SU(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.SU(n, q))
+end
+
+function SU(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.SU(_get_gap_function(T), n, q))
+end
