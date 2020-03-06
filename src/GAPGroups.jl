@@ -20,6 +20,11 @@ include("./types.jl")
 include("./group_constructors.jl")
 
 
+function __init__()
+  append!(gap_group_types, [(GAPGroups.GAP.Globals.IsPermGroup, PermGroup), (GAPGroups.GAP.Globals.IsPcGroup, PcGroup), 
+ (GAPGroups.GAP.Globals.IsMatrixGroup, MatrixGroup), (GAPGroups.GAP.Globals.IsFpGroup, FPGroup)])
+end
+
 elem_type(::PermGroup) = PermGroupElem
 elem_type(::MatrixGroup) = MatrixGroupElem
 elem_type(::FPGroup) = FPGroupElem

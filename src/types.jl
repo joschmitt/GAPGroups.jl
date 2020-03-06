@@ -87,16 +87,11 @@ mutable struct AutomorphismGroupElem{T} <: GroupElem
 end
 
 
-const gap_group_types = 
-[(:(GAPGroups.GAP.Globals.IsPermGroup), PermGroup), (:(GAPGroups.GAP.Globals.IsPcGroup), PcGroup), 
- (:(GAPGroups.GAP.Globals.IsMatrixGroup), MatrixGroup), (:(GAPGroups.GAP.Globals.IsFpGroup), FPGroup)               
-]
-
-
+const gap_group_types = []
 
 function _get_type(G::GapObj)
   for i = 1:length(gap_group_types)
-    if eval(gap_group_types[i][1])(G)
+    if gap_group_types[i][1](G)
       return gap_group_types[i][2]
     end
   end
@@ -106,7 +101,7 @@ end
 function _get_gap_function(T)
   for i = 1:length(gap_group_types)
     if gap_group_types[i][2] == T
-      return eval(gap_group_types[i][1])
+      return gap_group_types[i][1]
     end
   end
   error("Not a known type of group")
