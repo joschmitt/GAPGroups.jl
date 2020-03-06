@@ -230,13 +230,23 @@ end
 #
 ################################################################################
 
+function quo(G::FPGroup, elements::Vector{S}) where T <: Group where S <: GroupElem
+  @assert elem_type(G) == S
+  elems_in_gap = GAP.julia_to_gap(GapObj[x.X for x in elements])
+  Q=FPGroup((G.X)/elems_in_gap)
+  function proj(x::FPGroupElem)
+     return group_element(Q,GAP.Globals.MappedWord(x.X,GAP.Globals.GeneratorsOfGroup(G.X), GAP.Globals.GeneratorsOfGroup(Q.X)))
+  end
+  return Q, hom(G,Q,proj)
+end
+
 function quo(G::T, elements::Vector{S}) where T <: Group where S <: GroupElem
   @assert elem_type(G) == S
   elems_in_gap = GAP.julia_to_gap(GapObj[x.X for x in elements])
-  H = GAP.Globals.Group(elems_in_gap)
+  H = GAP.Globals.NormalClosure(GAP.Globals.Group(elems_in_gap))
   @assert GAP.Globals.IsNormal(G.X, H)
   H1 = T(H)
-  return quo(G, H)
+  return quo(G, H1)
 end
 
 function quo(G::T, H::T) where T <: Group

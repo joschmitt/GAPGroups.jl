@@ -554,5 +554,9 @@ function ispgroup(G::Group)
    end
 end
 
+function relators(G::FPGroup)
+   L=GAP.gap_to_julia(GAP.Globals.RelatorsOfFpGroup(G.X))
+   F=free_group(G)
+   return [group_element(F,x) for x in L]
 end
 

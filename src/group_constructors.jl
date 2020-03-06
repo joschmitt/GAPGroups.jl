@@ -93,9 +93,38 @@ function mathieu_group(n::Int)
   return PermGroup(GAP.Globals.MathieuGroup(n), n)
 end
 
+
+################################################################################
+#
+# begin FpGroups
+#
+################################################################################
+
+function free_group(n::Int)
+   return FPGroup(GAP.Globals.FreeGroup(n))
+end
+
+function free_group(L::String...)
+   J=GAP.julia_to_gap([GAP.julia_to_gap(x) for x in L])
+   return FPGroup(GAP.Globals.FreeGroup(J))
+end
+
 function free_abelian_group(n::Int)
   return FPGroup(GAP.Globals.FreeAbelianGroup(n))
 end
+
+# for the definition of group modulo relations, see the quo function in the sub.jl section
+
+function free_group(G::FPGroup)
+   return FPGroup(GAP.Globals.FreeGroupOfFpGroup(G.X))
+end
+
+################################################################################
+#
+# end FpGroups
+#
+################################################################################
+
 
 function dihedral_group(n::Int)
   @assert iseven(n)
@@ -125,6 +154,11 @@ function isquaternion_group(G::Group)
   return GAP.Globals.IsQuaternionGroup(G.X)
 end
 
+################################################################################
+#
+# start isometry groups
+#
+################################################################################
 
 function GL(n::Int, q::Int)
   return MatrixGroup(GAP.Globals.GL(n, q))
@@ -142,26 +176,80 @@ function SL(::Type{T}, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.SL(_get_gap_function(T), n, q))
 end
 
-function Sp(n::Int, q::Int)
+function symplectic_group(n::Int, q::Int)
   return MatrixGroup(GAP.Globals.Sp(n, q))
 end
 
-function Sp(::Type{T}, n::Int, q::Int) where T <: Group
+function symplectic_group(::Type{T}, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.Sp(_get_gap_function(T), n, q))
 end
 
-function GU(n::Int, q::Int)
+function unitary_group(n::Int, q::Int)
   return MatrixGroup(GAP.Globals.GU(n, q))
 end
 
-function GU(::Type{T}, n::Int, q::Int) where T <: Group
+function unitary_group(::Type{T}, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.GU(_get_gap_function(T), n, q))
 end
 
-function SU(n::Int, q::Int)
+function special_unitary(n::Int, q::Int)
   return MatrixGroup(GAP.Globals.SU(n, q))
 end
 
-function SU(::Type{T}, n::Int, q::Int) where T <: Group
+function special_unitary(::Type{T}, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.SU(_get_gap_function(T), n, q))
 end
+
+function orthogonal_group(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.GO(n, q))
+end
+
+function orthogonal_group(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.GO(_get_gap_function(T), n, q))
+end
+
+function orthogonal_group(e::Int, n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.GO(e, n, q))
+end
+
+function orthogonal_group(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.GO(_get_gap_function(T), e, n, q))
+end
+
+function special_orthogonal_group(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.SO(n, q))
+end
+
+function special_orthogonal_group(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.SO(_get_gap_function(T), n, q))
+end
+
+function special_orthogonal_group(e::Int, n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.SO(e, n, q))
+end
+
+function special_orthogonal_group(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.SO(_get_gap_function(T), e, n, q))
+end
+
+function omega_group(n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.Omega(n, q))
+end
+
+function omega_group(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.Omega(_get_gap_function(T), n, q))
+end
+
+function omega_group(e::Int, n::Int, q::Int)
+  return MatrixGroup(GAP.Globals.Omega(e, n, q))
+end
+
+function omega_group(::Type{T}, n::Int, q::Int) where T <: Group
+  return T(GAP.Globals.Omega(_get_gap_function(T), e, n, q))
+end
+
+################################################################################
+#
+# end isometry groups
+#
+################################################################################
