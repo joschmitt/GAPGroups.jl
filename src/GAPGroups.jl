@@ -57,12 +57,12 @@ function parent(x::GroupElem)
   return x.parent
 end
 
-function isfinite(G::PermGroup)
+function Base.isfinite(G::PermGroup)
   return true
 end
 
-function isfinite(G::Group)
-  return GAP.Globals.IsFinite(G)
+function Base.isfinite(G::Group)
+  return GAP.Globals.IsFinite(G.X)
 end
 
 function degree(x::PermGroup)

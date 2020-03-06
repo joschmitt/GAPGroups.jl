@@ -124,16 +124,45 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
 end
 
 @testset "Special Constructors" begin
-  @test isa(dihedral_group(6), PcGroup)
-  @test isa(dihedral_group(PermGroup, 6), PermGroup)
-  
+
   @test isa(symmetric_group(5), PermGroup)
   
   @test isa(alternating_group(5), PermGroup)
+    
+  @test isa(dihedral_group(6), PcGroup)
+  @test isa(dihedral_group(PermGroup, 6), PermGroup)
+  
+  
   
   @test isquaternion_group(small_group(8, 4))
   @test small_groups_id(small_group(8, 4)) == (8, 4)
+  @test isa(small_group(8, 4), PcGroup)
+  @test isa(small_group(60, 5), PermGroup)
+  
+  @test isa(transitive_group(5, 5), PermGroup)
+  
+  @test isa(cyclic_group(5), PcGroup)
+  @test isa(cyclic_group(PermGroup, 5), PermGroup)
+  
+  G = abelian_group([2, 3])
+  @test isa(G, PcGroup)
+  @test iscyclic(G)
+  G1 = abelian_group(PermGroup, [2, 3])
+  @test isisomorphic(G, G1)[1]
 
 
+  H = free_abelian_group(2)
+  @test !isfinite(H)
+  @test isabelian(H)
+  
+  Q8 = quaternion_group(8)
+  @test isa(Q8, PcGroup)
+  
+  gl = GL(2, 3)
+  @test isa(gl, MatrixGroup)
+  
+  sl = SL(2, 3)
+  @test isa(sl, MatrixGroup)
+  
 end
 

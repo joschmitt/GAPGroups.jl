@@ -1,3 +1,8 @@
+
+export id_hom, trivial_morphism, hom, domain, codomain, image, issurjective, isinjective, 
+       isinvertible, automorphism_group, sub, quo, kernel, cokernel, haspreimage, isisomorphic
+
+
 function Base.show(io::IO, x::GAPGroupHomomorphism)
   print(io, "Group homomorphism from \n")
   println(io, domain(x))
