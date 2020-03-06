@@ -1,7 +1,8 @@
 # further possible functions: similar, iterate, literal_pow, parent_type
-module GAPGroups 
+module GAPGroups
 
 using GAP
+using Nemo
 
 import Base.==
 import Base.rand
@@ -22,6 +23,7 @@ include("types.jl")
 include("group_constructors.jl")
 include("sub.jl")
 include("cosets.jl")
+include("./oscar_to_gap.jl")
 
 
 function __init__()
@@ -39,6 +41,9 @@ function __init__()
         (FPGroup, GAP.Globals.IsomorphismFpGroup),
         (PcGroup, GAP.Globals.IsomorphismPcGroup),
     ])
+
+  # Apparently, one has to do this here...
+  GAP.Globals.Read(GAP.julia_to_gap(joinpath(@__DIR__, "oscar_to_gap.g")))
 end
 
 # TODO: as soon as GAP packages like `polycyclic` or `rcwa` are loaded,
