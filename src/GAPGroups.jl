@@ -22,8 +22,11 @@ include("./group_constructors.jl")
 
 
 function __init__()
-  append!(gap_group_types, [(GAPGroups.GAP.Globals.IsPermGroup, PermGroup), (GAPGroups.GAP.Globals.IsPcGroup, PcGroup), 
+  append!(_gap_group_types, [(GAPGroups.GAP.Globals.IsPermGroup, PermGroup), (GAPGroups.GAP.Globals.IsPcGroup, PcGroup), 
  (GAPGroups.GAP.Globals.IsMatrixGroup, MatrixGroup), (GAPGroups.GAP.Globals.IsFpGroup, FPGroup)])
+ 
+ append!(_iso_function, [(PermGroup, GAP.Globals.IsomorphismPermGroup), (FPGroup, GAP.Globals.IsomorphismFpGroup), 
+                           (PcGroup, GAP.Globals.IsomorphismPcGroup)])
 end
 
 elem_type(::PermGroup) = PermGroupElem
@@ -513,7 +516,6 @@ frattini_subgroup(G::Group) = _as_subgroup(GAP.Globals.FrattiniSubgroup(G.X),G)
 radical_subgroup(G::Group) = _as_subgroup(GAP.Globals.RadicalGroup(G.X),G)
 
 socle(G::Group) = _as_subgroup(GAP.Globals.Socle(G.X),G)
-
 
 
 ################################################################################

@@ -405,3 +405,27 @@ end
 function restrict_automorphism(f::GAPGroupHomomorphism, H::Group)
   return _hom_from_gap_map(H, H, f.image)
 end
+
+################################################################################
+#
+#  Conversions between types
+#
+################################################################################
+
+const _iso_function = []
+
+function _get_iso_function(T)
+  for i = 1:length(iso_function)
+    if _iso_function[i][1] == T
+      return _iso_function[i][2]
+    end
+  end
+  error("Not a valid type")
+end
+function isomorphic_group(::Type{T}, G::Group) where T <: Union{PcGroup, PermGroup, FPGroup}
+  f = _get_iso_function(T)
+  mp = f(G.X)
+  G1 = T(GAP.Globals.ImagesSource(mp))
+  fmap = _hom_from_gap_map(G, G1, mp)
+  return G1, fmap
+end
