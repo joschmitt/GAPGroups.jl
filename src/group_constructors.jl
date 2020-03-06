@@ -6,7 +6,7 @@
 
 export symmetric_group, alternating_group, small_group, small_groups_id, transitive_group,
        cyclic_group, abelian_group, mathieu_group, free_abelian_group, dihedral_group,
-       quaternion_group, GL, SL, isquaternion_group
+       quaternion_group, GL, SL, isquaternion_group, isabelian, iscyclic, isdihedral_group
 
 
 function symmetric_group(n::Int64)
@@ -46,7 +46,9 @@ function isalternating_group(G::Group)
 end
 
 function small_group(n::Int, m::Int)
-  return PcGroup(GAP.Globals.SmallGroup(n, m))
+  G = GAP.Globals.SmallGroup(n, m)
+  T = _get_type(G)
+  return T(G)
 end
 
 function small_groups_id(G::Group)
@@ -136,12 +138,8 @@ function dihedral_group(::Type{T}, n::Int) where T <: Group
   return T(GAP.Globals.DihedralGroup(_get_gap_function(T), n))
 end
 
-function isdihedral_group(G::Group)
-  return GAP.Globals.IsDihedralGroup(G.X)
-end
-
 function quaternion_group(n::Int)
-  @assert divisible(n, 4)
+  @assert iszero(mod(n, 4))
   return PcGroup(GAP.Globals.QuaternionGroup(n))
 end
 

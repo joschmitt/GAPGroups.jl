@@ -16,6 +16,7 @@ using Test
     @test order(G) == factorial(n)
     @test order(BigInt, G) == factorial(n)
     @test gens(G) isa Vector{PermGroupElem}
+    @test ngens(G) == length(gens(G))
   end
 end
 
@@ -124,16 +125,72 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
 end
 
 @testset "Special Constructors" begin
-  @test isa(dihedral_group(6), PcGroup)
-  @test isa(dihedral_group(PermGroup, 6), PermGroup)
-  
+
   @test isa(symmetric_group(5), PermGroup)
   
   @test isa(alternating_group(5), PermGroup)
+    
+  @test isa(dihedral_group(6), PcGroup)
+  @test isa(dihedral_group(PermGroup, 6), PermGroup)
+  
+  
   
   @test isquaternion_group(small_group(8, 4))
   @test small_groups_id(small_group(8, 4)) == (8, 4)
+  @test isa(small_group(8, 4), PcGroup)
+  @test isa(small_group(60, 5), PermGroup)
+  
+  @test isa(transitive_group(5, 5), PermGroup)
+  
+  @test isa(cyclic_group(5), PcGroup)
+  @test isa(cyclic_group(PermGroup, 5), PermGroup)
+  
+  G = abelian_group([2, 3])
+  @test isa(G, PcGroup)
+  @test iscyclic(G)
+  G1 = abelian_group(PermGroup, [2, 3])
+  @test isisomorphic(G, G1)[1]
 
+
+  H = free_abelian_group(2)
+  @test !isfinite(H)
+  @test isabelian(H)
+  
+  Q8 = quaternion_group(8)
+  @test isa(Q8, PcGroup)
+  
+  gl = GL(2, 3)
+  @test isa(gl, MatrixGroup)
+  
+  sl = SL(2, 3)
+  @test isa(sl, MatrixGroup)
+  
+end
+
+@testset "Cosets" begin
+  
+  G = dihedral_group(8)
+  H, mH = center(G)
+  
+  @test index(G, H) == 4
+  
+  C = right_coset(H, G[1])
+  @test order(C) == length(elements(C))
+  
+  @test length(right_cosets(G, H)) == index(G, H)
+  
+  @test length(right_transversal(G, H)) == index(G, H)
 
 end
 
+@testset "Conjugacy classes" begin
+  
+  G = symmetric_group(5)
+  
+  cc = conjugacy_class(G, G[1])
+  cc1 = conjugacy_class(G, G[1]^G[2])
+  @test order(cc) == order(cc1)
+  @test cc == cc1
+  
+
+end

@@ -13,12 +13,21 @@ import Base.eltype
 import Base.iterate
 import Base.collect
 
-export symmetric_group, order, perm, cperm, isfinite, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right, div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm, degree, elements
+export symmetric_group, order, perm, cperm, isfinite, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right,      div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm, degree, elements, right_coset, coset_decomposition,
+right_cosets , right_transversal, conjugacy_class
      #conj!, conj
 
 include("./types.jl")
 include("./group_constructors.jl")
 
+
+function __init__()
+  append!(_gap_group_types, [(GAPGroups.GAP.Globals.IsPermGroup, PermGroup), (GAPGroups.GAP.Globals.IsPcGroup, PcGroup), 
+ (GAPGroups.GAP.Globals.IsMatrixGroup, MatrixGroup), (GAPGroups.GAP.Globals.IsFpGroup, FPGroup)])
+ 
+ append!(_iso_function, [(PermGroup, GAP.Globals.IsomorphismPermGroup), (FPGroup, GAP.Globals.IsomorphismFpGroup), 
+                           (PcGroup, GAP.Globals.IsomorphismPcGroup)])
+end
 
 elem_type(::PermGroup) = PermGroupElem
 elem_type(::MatrixGroup) = MatrixGroupElem
@@ -32,6 +41,14 @@ end
 
 function group_element(G::MatrixGroup, x::GapObj)
   return MatrixGroupElem(G, x)
+end
+
+function group_element(G::PcGroup, x::GapObj)
+  return PcGroupElem(G, x)
+end
+
+function group_element(G::FPGroup, x::GapObj)
+  return FPGroup(G, x)
 end
 
 function elements(G::T) where T <: Group
@@ -52,12 +69,12 @@ function parent(x::GroupElem)
   return x.parent
 end
 
-function isfinite(G::PermGroup)
+function Base.isfinite(G::PermGroup)
   return true
 end
 
-function isfinite(G::Group)
-  return GAP.Globals.IsFinite(G)
+function Base.isfinite(G::Group)
+  return GAP.Globals.IsFinite(G.X)
 end
 
 function degree(x::PermGroup)
@@ -219,10 +236,11 @@ end
 
 function gens(G::Group, i::Integer)
    L = GAP.Globals.GeneratorsOfGroup(G.X)
+   @assert length(L) >= i "The number of generators is lower than the given index"
    return group_element(G, L[i])
 end
 
-ngens(G::Group) = length(gens(G))
+ngens(G::Group) = length(GAP.Globals.GeneratorsOfGroup(G.X))
 
 
 Base.getindex(G::Group, i::Int) = gens(G, i)
@@ -262,8 +280,12 @@ mutable struct GroupCoset{T<: Group, S <: GroupElem}
    X::T
    H::T
    repr::S
-   right::String     # says if the coset is left or right
+   side::Symbol     # says if the coset is left or right
    coset::GapObj
+end
+
+function _group_coset(X::Group, H::Group, repr::GroupElem, side::Symbol, coset::GapObj)
+  return GroupCoset{typeof(X), typeof(repr)}(X, H, repr, side, coset)
 end
 
 function right_coset(H::Group, g::GroupElem)
@@ -271,7 +293,7 @@ function right_coset(H::Group, g::GroupElem)
    if !GAP.Globals.IsSubset(parent(g).X, H.X)
       throw(ArgumentError("H is not a subgroup of parent(g)"))
    end
-   return GroupCoset(parent(g), H, g, "right", GAP.Globals.RightCoset(H.X,g.X))
+   return _group_coset(parent(g), H, g, :right, GAP.Globals.RightCoset(H.X,g.X))
 end
 
 function left_coset(H::Group, g::GroupElem)
@@ -279,7 +301,7 @@ function left_coset(H::Group, g::GroupElem)
    if !GAP.Globals.IsSubset(parent(g).X, H.X)
       throw(ArgumentError("H is not a subgroup of parent(g)"))
    end
-   return GroupCoset(parent(g), H, g, "left", GAP.Globals.RightCoset(GAP.Globals.ConjugateSubgroup(H.X,GAP.Globals.Inverse(g.X)),g.X))
+   return _group_coset(parent(g), H, g, :left, GAP.Globals.RightCoset(GAP.Globals.ConjugateSubgroup(H.X,GAP.Globals.Inverse(g.X)),g.X))
 end
 
 function show(io::IO, x::GroupCoset)
@@ -296,25 +318,34 @@ acting_domain(C::GroupCoset) = C.H
 representative(C::GroupCoset) = C.repr
 
 function elements(C::GroupCoset)
-   L=GAP.gap_to_julia(GAP.Globals.AsList(C.coset))
-   return elem_type(C.X)[group_element(C.X,x) for x in L]
+  L = GAP.Globals.AsList(C.coset)
+  l = Vector{elem_type(C.X)}(undef, length(L))
+  for i = 1:length(l)
+    l[i] = group_element(C.X, L[i])
+  end
+  return l
 end
 
 order(C::GroupCoset) = GAP.Globals.Size(C.coset)
 
 is_bicoset(C::GroupCoset) = GAP.Globals.IsBiCoset(C.coset)
 
-function coset_decomposition(G::T, H::T) where T<:Group
-   L=GAP.Globals.CosetDecomposition(G.X,H.X)
-   return T[[group_element(G.X,x) for x in GAP.gap_to_julia(J)] for J in GAP.gap_to_julia(L)]
+function right_cosets(G::Group, H::Group)
+  L = GAP.Globals.RightCosets(G.X, H.X)
+  l = Vector{GroupCoset{typeof(G), elem_type(G)}}(undef, length(L))
+  for i = 1:length(l)
+    l[i] = _group_coset(G, H, group_element(G, GAP.Globals.Representative(L[i])), :right, L[i])
+  end
+  return l
 end
 
-function right_transversal(G::T, H::T) where T<:Group
-   L=GAP.Globals.RightTransversal(G.X,H.X)
-   return T[group_element(G.X,x) for x in GAP.gap_to_julia(L)]
+
+function right_transversal(G::T, H::T) where T<: Group
+   L = GAP.Globals.RightTransversal(G.X,H.X)
+   l = Vector{elem_type(G)}(undef, length(L))
+   return elem_type(G)[group_element(G, x) for x in GAP.gap_to_julia(L)]
 end
 
-left_transversal = right_transversal
 
 # T=type of the group, S=type of the element
 mutable struct GroupDoubleCoset{T <: Group, S <: GroupElem}
@@ -363,6 +394,8 @@ Base.:show(io::IO, x::GroupConjClass) = print(io, GAP.gap_to_julia(GAP.Globals.S
 function _conjugacy_class(G, g, cc::GapObj)         # function for assignment
   return GroupConjClass{typeof(G), typeof(g)}(G, g, cc)
 end
+
+==(a::GroupConjClass{T, S}, b::GroupConjClass{T, S}) where S where T = a.CC == b.CC 
 
 order(C::GroupConjClass) = GAP.Globals.Size(C.CC)
 
@@ -483,7 +516,6 @@ frattini_subgroup(G::Group) = _as_subgroup(GAP.Globals.FrattiniSubgroup(G.X),G)
 radical_subgroup(G::Group) = _as_subgroup(GAP.Globals.RadicalGroup(G.X),G)
 
 socle(G::Group) = _as_subgroup(GAP.Globals.Socle(G.X),G)
-
 
 
 ################################################################################
