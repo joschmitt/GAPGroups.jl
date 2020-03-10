@@ -1,10 +1,19 @@
+"""
+TODO: document this
+"""
 abstract type Group end
 
+"""
+TODO: document this
+"""
 abstract type GroupElem end
 
 export PermGroup, PermGroupElem, MatrixGroup, MatrixGroupElem, PcGroup, PcGroupElem, 
        FPGroup, FPGroupElem, AutomorphismGroup, AutomorphismGroupElem
 
+"""
+TODO: document this
+"""
 struct PermGroup <: Group
    X::GapObj
    deg::Int64       # G < Sym(deg)
@@ -23,11 +32,17 @@ struct PermGroup <: Group
    end
 end
 
+"""
+TODO: document this
+"""
 mutable struct PermGroupElem <: GroupElem
    parent::PermGroup
    X::GapObj   
 end
 
+"""
+TODO: document this
+"""
 struct MatrixGroup <: Group
   X::GapObj
   function MatrixGroup(G::GapObj)
@@ -37,11 +52,17 @@ struct MatrixGroup <: Group
   end
 end
 
+"""
+TODO: document this
+"""
 mutable struct MatrixGroupElem <: GroupElem
    parent::MatrixGroup
    X::GapObj       
 end
 
+"""
+TODO: document this
+"""
 struct PcGroup <: Group
   X::GapObj
   function PcGroup(G::GapObj)
@@ -51,11 +72,17 @@ struct PcGroup <: Group
   end
 end
 
+"""
+TODO: document this
+"""
 mutable struct PcGroupElem <: GroupElem
    parent::PcGroup
    X::GapObj
 end
 
+"""
+TODO: document this
+"""
 struct FPGroup <: Group
   X::GapObj
   
@@ -66,11 +93,17 @@ struct FPGroup <: Group
   end
 end
 
+"""
+TODO: document this
+"""
 mutable struct FPGroupElem <: GroupElem
    parent::FPGroup
    X::GapObj
 end
 
+"""
+TODO: document this
+"""
 mutable struct AutomorphismGroup{T} <: Group
   X::GapObj
   G::T
@@ -81,27 +114,34 @@ mutable struct AutomorphismGroup{T} <: Group
   end
 end
 
+"""
+TODO: document this
+"""
 mutable struct AutomorphismGroupElem{T} <: GroupElem
    parent::AutomorphismGroup{T}
    X::GapObj
 end
 
-
+#
+# The array _gap_group_types contains pairs (X,Y) where
+# X is a GAP filter such as IsPermGroup, and Y is a corresponding
+# Julia type such as `PermGroup`.
+#
 const _gap_group_types = []
 
 function _get_type(G::GapObj)
-  for i = 1:length(_gap_group_types)
-    if _gap_group_types[i][1](G)
-      return _gap_group_types[i][2]
+  for pair in _gap_group_types
+    if pair[1](G)
+      return pair[2]
     end
   end
   error("Not a known type of group")
 end
 
 function _get_gap_function(T)
-  for i = 1:length(_gap_group_types)
-    if _gap_group_types[i][2] == T
-      return _gap_group_types[i][1]
+  for pair in _gap_group_types
+    if pair[2] == T
+      return pair[1]
     end
   end
   error("Not a known type of group")
