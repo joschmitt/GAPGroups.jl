@@ -210,7 +210,7 @@ function orthogonal_group(e::Int, n::Int, q::Int)
   return MatrixGroup(GAP.Globals.GO(e, n, q))
 end
 
-function orthogonal_group(::Type{T}, n::Int, q::Int) where T <: Group
+function orthogonal_group(::Type{T}, e::Int, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.GO(_get_gap_function(T), e, n, q))
 end
 
@@ -226,7 +226,7 @@ function special_orthogonal_group(e::Int, n::Int, q::Int)
   return MatrixGroup(GAP.Globals.SO(e, n, q))
 end
 
-function special_orthogonal_group(::Type{T}, n::Int, q::Int) where T <: Group
+function special_orthogonal_group(::Type{T}, e::Int, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.SO(_get_gap_function(T), e, n, q))
 end
 
@@ -242,7 +242,7 @@ function omega_group(e::Int, n::Int, q::Int)
   return MatrixGroup(GAP.Globals.Omega(e, n, q))
 end
 
-function omega_group(::Type{T}, n::Int, q::Int) where T <: Group
+function omega_group(::Type{T}, e::Int, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.Omega(_get_gap_function(T), e, n, q))
 end
 
