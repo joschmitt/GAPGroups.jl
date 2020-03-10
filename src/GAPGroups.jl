@@ -592,3 +592,4 @@ function relators(G::FPGroup)
    return [group_element(F,x) for x in L]
 end
 
+end
