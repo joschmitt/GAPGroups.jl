@@ -214,11 +214,11 @@ end
 #
 ################################################################################
 
-function isnormal(G::Group, H::Group)
+function isnormal(G::T, H::T) where T <: Group
   return GAP.Globals.IsNormal(G.X, H.X)
 end
 
-function ischaracteristic(G::Group, H::Group)
+function ischaracteristic(G::T, H::T) where T <: Group
   return GAP.Globals.IsCharacteristicSubgroup(G.X, H.X)
 end
 
