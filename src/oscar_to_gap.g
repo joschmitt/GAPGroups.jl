@@ -53,7 +53,7 @@ InstallMethod( NumberRows,
   x -> Julia.Generic.nrows(ForeignPointer(x))
 );
 
-InstallMethod( Length,
+InstallOtherMethod( Length,
   ["IsAAGenericMatrixObj"],
   x -> Julia.Nemo.nrows(ForeignPointer(x))
 );
@@ -70,7 +70,7 @@ InstallMethod( \[\],
   end
 );
 
-InstallMethod( RankMat,
+InstallOtherMethod( RankMat,
   ["IsAAGenericMatrixObj"],
   x -> Julia.Generic.rank(ForeignPointer(x))
 );
@@ -145,7 +145,7 @@ InstallMethod( One,
   x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.one(Julia.Generic.parent(ForeignPointer(x))))
 );
 
-InstallMethod( TraceMat,
+InstallOtherMethod( TraceMat,
   ["IsAAGenericMatrixObj"],
   x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.tr(ForeignPointer(x)))
 );
@@ -155,7 +155,7 @@ InstallMethod( DeterminantMat,
   x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.det(ForeignPointer(x)))
 );
 
-InstallMethod( TransposedMat,
+InstallOtherMethod( TransposedMat,
   ["IsAAGenericMatrixObj"],
   x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.transpose(ForeignPointer(x)))
 );
@@ -179,7 +179,7 @@ InstallMethod( NestingDepthM,
 # GAP likes it matrices to be lists of lists. We fake this up by returning views
 # to the rows of the MatElems. But still, this is horrible...
 
-InstallMethod( \[\],
+InstallOtherMethod( \[\],
   ["IsAAGenericMatrixObj", "IsPosInt"],
   function( x, y )
     return Julia.GAPGroups.oscar_matrix_row_to_gap(ForeignPointer(x), y);
