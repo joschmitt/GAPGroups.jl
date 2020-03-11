@@ -79,26 +79,26 @@ end
   end
 end
 
-
-function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
-   @testset "Elements of Sym($i)" for i in L
+@testset "Operations on PermGroup" begin
+   @testset "Elements of Sym($i)" for i in 8:16
       if i>1
       G=symmetric_group(i)
       x=@inferred rand(G)
       y=rand(G)
       #z=cperm(1:i)
       z=perm(vcat([j for j in 2:i],[1]))
-      if minimum(L)>3
+      if i>3
          w=cperm([1,2],[j for j=3:i])
       else
          w=cperm([1,2])
       end
-      ox= @inferred order(x)
+      ox=order(x)
       oy=order(y)
       oz=order(z)
 
       @test x isa PermGroupElem
       @test ox isa Int64
+      @test inv(x) in G
       @test inv(x)==x^-1
       @test sign(z)==(-1)^(i-1)
       @test sign(x*y)==sign(x)*sign(y)
@@ -128,6 +128,7 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
       end
    end
 end
+
 
 @testset "Special Constructors" begin
 
