@@ -10,6 +10,8 @@ using Test
     @test degree(G) == n
     @test GAPGroups.isfinite(G)
     @test order(G) isa Int64
+    @test exponent(G) isa Integer
+    @test exponent(G) == lcm(1:n)
     if n < 13 
       @test order(Int32, G) isa Int32 
     end
@@ -96,6 +98,7 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
 
       @test x isa PermGroupElem
       @test ox isa Int64
+      @test inv(x)==x^-1
       @test sign(z)==(-1)^(i-1)
       @test sign(x*y)==sign(x)*sign(y)
       @test parent(x)==G
@@ -106,6 +109,7 @@ function test_operations(L::Union{Array{Int64,1},UnitRange{Int64}})
       @test x*one(G)==x
       @test oz==i
       @test x*x^-1 == one(G)
+      @test isone(x*x^-1)
       @test x^(ox-1)==x^-1
       @test x^w == w^-1*x*w
       @test z^y == y^-1*z*y
