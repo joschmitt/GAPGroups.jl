@@ -42,7 +42,8 @@ function __init__()
         (PcGroup, GAP.Globals.IsomorphismPcGroup),
     ])
 
-  # Apparently, one has to do this here...
+  # Apparently, one has to read GAP-files here to properly include them.
+  # Maybe one could/should put all the GAP stuff in a GAP package and load that?
   GAP.Globals.Read(GAP.julia_to_gap(joinpath(@__DIR__, "oscar_to_gap.g")))
 end
 

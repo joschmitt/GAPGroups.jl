@@ -1,25 +1,23 @@
+DeclareCategory("IsForeignObject", IsObject);
+DeclareAttribute("ForeignPointer", IsForeignObject);
+
 # AAGeneric as in AbstractAlgebra Generic
-DeclareCategory("IsAAGenericObject", IsObject);
-DeclareSynonym("IsAAGenericRing", IsAAGenericObject and IsRing);
-DeclareSynonym("IsAAGenericField", IsAAGenericObject and IsField);
-DeclareSynonym("IsAAGenericMatrixObj", IsAAGenericObject and IsMatrixObj and IsMatrix);
-DeclareSynonym("IsAAGenericMatrixRowObj", IsAAGenericObject and IsVectorObj);
+DeclareSynonym("IsAAGenericRing", IsForeignObject and IsRing);
+DeclareSynonym("IsAAGenericRingElem", IsForeignObject and IsRingElement);
+DeclareSynonym("IsAAGenericField", IsForeignObject and IsField);
+DeclareSynonym("IsAAGenericMatrixObj", IsForeignObject and IsMatrixObj and IsMatrix and IsOrdinaryMatrix);
+DeclareSynonym("IsAAGenericMatrixRowObj", IsForeignObject and IsVectorObj);
 
-aageneric_family := NewFamily( "AAGeneric_Family", IsObject, IsAAGenericObject );
-aageneric_ring_type := NewType(aageneric_family, IsAAGenericRing);
-
-#aageneric_field_family := NewFamily( "AAGeneric_Field_Family", IsObject, IsAAGenericField );
-#aageneric_field_type := NewType(aageneric_field_family, IsAAGenericField);
-
-coll_aageneric_family := CollectionsFamily(aageneric_family);
-aageneric_matrix_row_type := NewType(coll_aageneric_family, IsAAGenericMatrixRowObj and IsAttributeStoringRep);
-aageneric_matrix_type := NewType(CollectionsFamily(coll_aageneric_family), IsAAGenericMatrixObj and IsAttributeStoringRep);
+DeclareCategoryCollections("IsAAGenericRingElem");
+DeclareCategoryCollections("IsAAGenericRingElemCollection");
+DeclareCategoryCollections("IsAAGenericRingElemCollColl");
+aageneric_family := NewFamily( "AAGeneric_Family", IsObject, IsAAGenericRingElem );
 
 # The general comparing function using the global GAP_comparison_dictionary
 InstallMethod( \<,
-  ["IsAAGenericObject", "IsAAGenericObject"],
+  ["IsForeignObject", "IsForeignObject"],
   function( x, y )
-    return Julia.Base.\<(Julia._get_comparison_number(JuliaPointer(x)), Julia._get_comparison_number(JuliaPointer(y)));
+    return Julia.Base.\<(Julia.GAPGroups._get_comparison_number(ForeignPointer(x)), Julia.GAPGroups._get_comparison_number(ForeignPointer(y)));
   end
 );
 
@@ -30,18 +28,18 @@ InstallMethod( \<,
 ################################################################################
 
 InstallMethod( String,
-  ["IsAAGenericObject"],
-  x -> String( JuliaPointer( x ) )
+  ["IsForeignObject"],
+  x -> String( ForeignPointer( x ) )
 );
 
 InstallMethod( PrintObj,
-  ["IsAAGenericObject"],
+  ["IsForeignObject"],
   x -> Print( PrintString( x ) )
 );
 
 InstallMethod( ViewString,
-  ["IsAAGenericObject"],
-  x -> ViewString( JuliaPointer(x) )
+  ["IsForeignObject"],
+  x -> ViewString( ForeignPointer(x) )
 );
 
 ################################################################################
@@ -52,108 +50,124 @@ InstallMethod( ViewString,
 
 InstallMethod( NumberRows,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.Generic.nrows(JuliaPointer(x))
+  x -> Julia.Generic.nrows(ForeignPointer(x))
 );
 
 InstallMethod( Length,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.Nemo.nrows(JuliaPointer(x))
+  x -> Julia.Nemo.nrows(ForeignPointer(x))
 );
 
 InstallMethod( NumberColumns,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.Generic.ncols(JuliaPointer(x))
+  x -> Julia.Generic.ncols(ForeignPointer(x))
+);
+
+InstallMethod( \[\],
+  ["IsAAGenericMatrixObj", "IsPosInt", "IsPosInt"],
+  function( x, y, z )
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.getindex(ForeignPointer(x), y, z));
+  end
 );
 
 InstallMethod( RankMat,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.Generic.rank(JuliaPointer(x))
+  x -> Julia.Generic.rank(ForeignPointer(x))
 );
 
 InstallMethod( \=,
   ["IsAAGenericMatrixObj", "IsAAGenericMatrixObj"],
   function( x, y )
-    return Julia.Base.\=\=(JuliaPointer(x), JuliaPointer(y));
+    return Julia.Base.\=\=(ForeignPointer(x), ForeignPointer(y));
   end
 );
 
 InstallMethod( \+,
   ["IsAAGenericMatrixObj", "IsAAGenericMatrixObj"],
   function( x, y )
-    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\+(JuliaPointer(x), JuliaPointer(y)));
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\+(ForeignPointer(x), ForeignPointer(y)));
   end
 );
 
 InstallMethod( \-,
   ["IsAAGenericMatrixObj", "IsAAGenericMatrixObj"],
   function( x, y )
-    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\-(JuliaPointer(x), JuliaPointer(y)));
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\-(ForeignPointer(x), ForeignPointer(y)));
   end
 );
 
 InstallMethod( \*,
   ["IsAAGenericMatrixObj", "IsAAGenericMatrixObj"],
   function( x, y )
-    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\*(JuliaPointer(x), JuliaPointer(y)));
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\*(ForeignPointer(x), ForeignPointer(y)));
   end
 );
 
 InstallMethod( \^,
   ["IsAAGenericMatrixObj", "IsPosInt"],
   function( x, y )
-    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\^(JuliaPointer(x), y));
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\^(ForeignPointer(x), y));
   end
 );
 
 InstallMethod( AdditiveInverse,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.GAPGroups.oscar_to_gap(Julia.Base.\-(JuliaPointer(x)))
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Base.\-(ForeignPointer(x)))
 );
 
 InstallMethod( Inverse,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.inv(JuliaPointer(x)))
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.inv(ForeignPointer(x)))
 );
 
 InstallMethod( InverseMutable,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.inv(JuliaPointer(x)))
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.inv(ForeignPointer(x)))
 );
 
 InstallMethod( IsZero,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.Base.iszero(JuliaPointer(x))
+  x -> Julia.Base.iszero(ForeignPointer(x))
 );
 
 InstallMethod( IsOne,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.Base.isone(JuliaPointer(x))
+  x -> Julia.Base.isone(ForeignPointer(x))
 );
 
 InstallMethod( Zero,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.zero(Julia.Generic.parent(JuliaPointer(x))))
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.zero(Julia.Generic.parent(ForeignPointer(x))))
 );
 
 InstallMethod( One,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.one(Julia.Generic.parent(JuliaPointer(x))))
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.one(Julia.Generic.parent(ForeignPointer(x))))
 );
 
-# Need ring elements in GAP for this...
-#InstallMethod( TraceMat,
-#  ["IsAAGenericMatrixObj"],
-#  x -> Julia.Generic.tr(JuliaPointer(x))
-#);
-#
-#InstallMethod( DeterminantMat,
-#  ["IsAAGenericMatrixObj"],
-#  x -> Julia.Generic.det(JuliaPointer(x))
-#);
+InstallMethod( TraceMat,
+  ["IsAAGenericMatrixObj"],
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.tr(ForeignPointer(x)))
+);
+
+InstallMethod( DeterminantMat,
+  ["IsAAGenericMatrixObj"],
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.det(ForeignPointer(x)))
+);
 
 InstallMethod( TransposedMat,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.transpose(JuliaPointer(x)))
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.transpose(ForeignPointer(x)))
+);
+
+InstallMethod( NestingDepthA,
+  ["IsAAGenericMatrixObj"],
+  x -> 2
+);
+
+InstallMethod( NestingDepthM,
+  ["IsAAGenericMatrixObj"],
+  x -> 2
 );
 
 ################################################################################
@@ -168,18 +182,28 @@ InstallMethod( TransposedMat,
 InstallMethod( \[\],
   ["IsAAGenericMatrixObj", "IsPosInt"],
   function( x, y )
-    return Julia.GAPGroups.oscar_matrix_row_to_gap(JuliaPointer(x), y);
+    return Julia.GAPGroups.oscar_matrix_row_to_gap(ForeignPointer(x), y);
   end
 );
 
 InstallMethod( \=,
   ["IsAAGenericMatrixRowObj", "IsAAGenericMatrixRowObj"],
   function( x, y )
-    return Julia.Base.\=\=(JuliaPointer(x), JuliaPointer(y));
+    return Julia.Base.\=\=(ForeignPointer(x), ForeignPointer(y));
   end
 );
 
 InstallMethod( Length,
   ["IsAAGenericMatrixRowObj"],
-  x -> Julia.Nemo.ncols(JuliaPointer(x))
+  x -> Julia.Nemo.ncols(ForeignPointer(x))
+);
+
+InstallMethod( NestingDepthA,
+  ["IsAAGenericMatrixRowObj"],
+  x -> 1
+);
+
+InstallMethod( NestingDepthM,
+  ["IsAAGenericMatrixRowObj"],
+  x -> 1
 );
