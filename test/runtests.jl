@@ -1,6 +1,7 @@
 using GAPGroups
 using Test
 
+include("testing.jl")
 
 @testset "The group Sym(n)" begin
 
