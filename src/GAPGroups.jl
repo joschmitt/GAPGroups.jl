@@ -163,7 +163,7 @@ inv!(out::GroupElem, x::GroupElem) = inv(x)  #if needed later
 
 Base.:^(x::GroupElem, y::Integer) = group_element(parent(x), x.X ^ y)
 
-Base.:<(x::PermGroup, y::PermGroup) = x.X < y.X
+Base.:<(x::PermGroupElem, y::PermGroupElem) = x.X < y.X
 
 Base.:/(x::GroupElem, y::GroupElem) = x*y^-1
 
@@ -259,7 +259,7 @@ ngens(G::Group) = length(GAP.Globals.GeneratorsOfGroup(G.X))
 Base.getindex(G::Group, i::Int) = gens(G, i)
 Base.:sign(x::PermGroupElem) = GAP.Globals.SignPerm(x.X)
 
-#Base.:isless(x::GAPGroupElem, y::GAPGroupElem) = x<y
+Base.:isless(x::PermGroupElem, y::PermGroupElem) = x<y
 
 #embedding of a permutation in permutation group
 function (G::PermGroup)(x::PermGroupElem)
