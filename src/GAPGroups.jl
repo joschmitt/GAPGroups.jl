@@ -13,7 +13,7 @@ import Base.eltype
 import Base.iterate
 import Base.collect
 
-export symmetric_group, order, perm, cperm, isfinite, hasgens, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right,      div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm, degree, elements, right_coset, coset_decomposition,
+export symmetric_group, order, perm, cperm, isfinite, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right,      div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm, degree, elements, right_coset, coset_decomposition,
 right_cosets , right_transversal, conjugacy_class
      #conj!, conj
 
@@ -163,8 +163,7 @@ inv!(out::GroupElem, x::GroupElem) = inv(x)  #if needed later
 
 Base.:^(x::GroupElem, y::Integer) = group_element(parent(x), x.X ^ y)
 
-#Is this useful?
-#Base.:<(x::GroupElem, y::GroupElem) = x.X < y.X
+Base.:<(x::PermGroup, y::PermGroup) = x.X < y.X
 
 Base.:/(x::GroupElem, y::GroupElem) = x*y^-1
 
