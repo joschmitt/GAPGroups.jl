@@ -19,6 +19,8 @@ right_cosets , right_transversal, conjugacy_class
 
 include("types.jl")
 include("group_constructors.jl")
+include("sub.jl")
+include("cosets.jl")
 
 
 function __init__()
@@ -276,19 +278,9 @@ function (x::PermGroupElem)(n)
    return GAP.Globals.OnPoints(n,x.X)
 end
 
-include("sub.jl")
-
 function conjugate_subgroup(G::T, x::GroupElem) where T<:Group
   return T(GAP.Globals.ConjugateSubgroup(G.X,x.X))
 end
-
-################################################################################
-#
-# cosets and double cosets
-#
-################################################################################
-
-include("cosets.jl")
 
 ################################################################################
 #

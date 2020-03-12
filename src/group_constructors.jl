@@ -4,9 +4,9 @@
 #  
 ################################################################################
 
-export symmetric_group, alternating_group, small_group, small_groups_id, transitive_group,
-       cyclic_group, abelian_group, mathieu_group, free_abelian_group, dihedral_group,
-       quaternion_group, GL, SL, isquaternion_group, isabelian, iscyclic, isdihedral_group
+export symmetric_group, alternating_group, issymmetric_group, isalternating_group, small_group, small_groups_id, transitive_group,
+       cyclic_group, abelian_group, mathieu_group, free_group, free_abelian_group, dihedral_group,
+       quaternion_group, GL, SL, symplectic_group, unitary_group, special_unitary_group, orthogonal_group, special_orthogonal_group, omega_group, isquaternion_group, isabelian, iscyclic, isdihedral_group
 
 
 function symmetric_group(n::Int64)
@@ -190,11 +190,11 @@ function unitary_group(::Type{T}, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.GU(_get_gap_function(T), n, q))
 end
 
-function special_unitary(n::Int, q::Int)
+function special_unitary_group(n::Int, q::Int)
   return MatrixGroup(GAP.Globals.SU(n, q))
 end
 
-function special_unitary(::Type{T}, n::Int, q::Int) where T <: Group
+function special_unitary_group(::Type{T}, n::Int, q::Int) where T <: Group
   return T(GAP.Globals.SU(_get_gap_function(T), n, q))
 end
 
