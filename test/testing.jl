@@ -47,6 +47,7 @@ for G in L
 
    @testset "Group operations" begin
       g1,h1 = deepcopy(g), deepcopy(h)
+#      g1,h1 = g,h
 
       @test inv(g) isa typeof(g)
       @test (g,h) == (g1,h1)
@@ -67,10 +68,12 @@ for G in L
 
    @testset "In-place operations" begin
       g1,h1 = deepcopy(g), deepcopy(h)
+#      g1,h1 = g,h
       out = rand(G)  #to be replaced by out=similar(g)
 
       @test isone(one!(g))
       g = deepcopy(g1)
+#      g = g1
 
       @testset "mul!" begin
          @test mul!(out,g,h) == g1*h1
@@ -82,13 +85,16 @@ for G in L
          @test mul!(g,g,h) == g1*h1
          @test h==h1
          g = deepcopy(g1)
+#         g = g1
 
          @test mul!(h,g,h) == g1*h1
          @test g == g1
          h = deepcopy(h1)
+#         h = h1
 
          @test mul!(g,g,g) == g1*g1
          g = deepcopy(g1)
+#         g = g1
       end
 
       @testset "conj!" begin
@@ -99,13 +105,16 @@ for G in L
          @test conj!(g,g,h) == res
          @test h == h1
          g = deepcopy(g1)
+#         g = g1
 
          @test conj!(h,g,h) == res
          @test g == g1
          h = deepcopy(h1)
+#         h = h1
 
          @test conj!(g,g,g) == g1
          g = deepcopy(g1)
+#         g = g1
       end
 
       @testset "comm!" begin
@@ -117,10 +126,12 @@ for G in L
          @test comm!(g,g,h) == res
          @test h == h1
          g = deepcopy(g1)
+#         g = g1
 
          @test comm!(h,g,h) == res
          @test g == g1
          h = deepcopy(h1)
+#         h = h1
       end
 
       @testset "div_[left|right]!" begin
@@ -132,13 +143,16 @@ for G in L
          @test div_right!(g,g,h) == res
          @test h == h1
          g = deepcopy(g1)
+#         g = g1
 
          @test div_right!(h,g,h) == res
          @test g == g1
          h = deepcopy(h1)
+#         h = h1
 
          @test div_right!(g,g,g) == one(g)
          g = deepcopy(g1)
+#         g = g1
 
          res = h^-1*g
 
@@ -148,14 +162,44 @@ for G in L
          @test div_left!(g,g,h) == res
          @test h == h1
          g = deepcopy(g1)
+#         g = g1
 
          @test div_left!(h,g,h) == res
          @test g == g1
          h = deepcopy(h1)
+#         h = h1
 
          @test div_left!(g,g,g) == one(g)
          g = deepcopy(g1)
+#         g = g1
       end
    end
 end
 end
+
+
+@testset "Iteration" begin
+  for n = 4:6
+    G = symmetric_group(n)
+    L = elements(G)
+    @test L isa Vector{PermGroupElem}
+    @test length(L) == factorial(G.deg)
+    @test length(unique(L)) == factorial(G.deg)
+    @test rand(G) isa PermGroupElem
+    @test rand(G) in G
+    A = PermGroupElem[]
+    for x in G
+      push!(A, x)
+    end
+    @test length(A) == factorial(G.deg)
+    s = 0         # check if the number of (n-1)-cycles is correct
+    for x in G 
+      if order(x) == (n-1)
+        s+=1
+      end
+    end
+    @test s == factorial(n-2)*n
+  end
+end
+
+
