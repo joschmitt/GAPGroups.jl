@@ -6,4 +6,5 @@ include("constructors.jl")
 include("operations.jl")
 include("elements.jl")
 include("subsets.jl")
+include("quotients.jl")
 

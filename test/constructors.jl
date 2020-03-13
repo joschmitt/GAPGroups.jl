@@ -57,6 +57,11 @@ end
   @test !isfinite(H)
   @test isabelian(H)
   
+  F = free_group("x","y")
+  @test F isa FPGroup
+  @test !isfinite(F)
+  @test !isabelian(F)
+
   Q8 = quaternion_group(8)
   @test isa(Q8, PcGroup)
   
