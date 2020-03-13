@@ -64,7 +64,7 @@ function group_element(G::PcGroup, x::GapObj)
 end
 
 function group_element(G::FPGroup, x::GapObj)
-  return FPGroup(G, x)
+  return FPGroupElem(G, x)
 end
 
 function elements(G::T) where T <: Group
