@@ -6,12 +6,15 @@ DeclareSynonym("IsAAGenericRing", IsForeignObject and IsRing);
 DeclareSynonym("IsAAGenericRingElem", IsForeignObject and IsRingElement);
 DeclareSynonym("IsAAGenericField", IsForeignObject and IsField);
 DeclareSynonym("IsAAGenericMatrixObj", IsForeignObject and IsMatrixObj and IsMatrix and IsOrdinaryMatrix);
-DeclareSynonym("IsAAGenericMatrixRowObj", IsForeignObject and IsVectorObj);
+DeclareSynonym("IsAAGenericMatrixRowObj", IsForeignObject and IsVectorObj and IsList);
 
 DeclareCategoryCollections("IsAAGenericRingElem");
 DeclareCategoryCollections("IsAAGenericRingElemCollection");
 DeclareCategoryCollections("IsAAGenericRingElemCollColl");
 aageneric_family := NewFamily( "AAGeneric_Family", IsObject, IsAAGenericRingElem );
+aageneric_cyclotomic_family := NewFamily( "AAGeneric_Cyclotomic_Family", IsObject, IsAAGenericRingElem and IsCyclotomic );
+aageneric_algebraic_elements_family := NewFamily( "AAGeneric_Algebraic_Elements_Family", IsObject, IsAAGenericRingElem and IsAlgebraicElement );
+aageneric_ffe_family := NewFamily( "AAGeneric_FFE_Family", IsObject, IsAAGenericRingElem and IsFFE );
 
 # The general comparing function using the global GAP_comparison_dictionary
 InstallMethod( \<,
@@ -27,19 +30,198 @@ InstallMethod( \<,
 #
 ################################################################################
 
-InstallMethod( String,
+InstallMethod( ViewObj,
   ["IsForeignObject"],
-  x -> String( ForeignPointer( x ) )
+  function( x )
+    Print( Julia.GAP.julia_to_gap(Julia.GAPGroups._print_to_string(ForeignPointer(x))) );
+  end
 );
 
-InstallMethod( PrintObj,
-  ["IsForeignObject"],
-  x -> Print( PrintString( x ) )
+################################################################################
+#
+#  Functions for RingElems
+#
+################################################################################
+
+InstallMethod( \=,
+  ["IsAAGenericRingElem", "IsAAGenericRingElem"],
+  function( x, y )
+    return Julia.Base.\=\=(ForeignPointer(x), ForeignPointer(y));
+  end
 );
 
-InstallMethod( ViewString,
-  ["IsForeignObject"],
-  x -> ViewString( ForeignPointer(x) )
+InstallMethod( \=,
+  ["IsAAGenericRingElem", "IsInt"],
+  function( x, y )
+    return Julia.Base.\=\=(ForeignPointer(x), Julia.GAP.gap_to_julia(y));
+  end
+);
+
+InstallMethod( \=,
+  ["IsInt", "IsAAGenericRingElem"],
+  function( x, y )
+    return Julia.Base.\=\=(Julia.GAP.gap_to_julia(x), ForeignPointer(y));
+  end
+);
+
+InstallMethod( \+,
+  ["IsAAGenericRingElem", "IsAAGenericRingElem"],
+  function( x, y )
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\+(ForeignPointer(x), ForeignPointer(y)));
+  end
+);
+
+InstallMethod( \-,
+  ["IsAAGenericRingElem", "IsAAGenericRingElem"],
+  function( x, y )
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\-(ForeignPointer(x), ForeignPointer(y)));
+  end
+);
+
+InstallMethod( \*,
+  ["IsAAGenericRingElem", "IsAAGenericRingElem"],
+  function( x, y )
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\*(ForeignPointer(x), ForeignPointer(y)));
+  end
+);
+
+InstallMethod( \*,
+  ["IsAAGenericRingElem", "IsInt and IsZeroCyc"],
+  SUM_FLAGS + 1, # Convince GAP that we really want this one...
+  function( x, y )
+    return Zero(x);
+  end
+);
+
+InstallMethod( \*,
+  ["IsInt and IsZeroCyc", "IsAAGenericRingElem"],
+  SUM_FLAGS + 1, # Convince GAP that we really want this one...
+  function( x, y )
+    return Zero(x);
+  end
+);
+
+InstallMethod( \^,
+  ["IsAAGenericRingElem", "IsPosInt"],
+  function( x, y )
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.\^(ForeignPointer(x), y));
+  end
+);
+
+InstallMethod( AdditiveInverse,
+  ["IsAAGenericRingElem"],
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Base.\-(ForeignPointer(x)))
+);
+
+InstallMethod( Inverse,
+  ["IsAAGenericRingElem and IsMultiplicativeElementWithInverse"],
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.inv(ForeignPointer(x)))
+);
+
+InstallMethod( IsZero,
+  ["IsAAGenericRingElem"],
+  x -> Julia.Base.iszero(ForeignPointer(x))
+);
+
+InstallMethod( IsOne,
+  ["IsAAGenericRingElem and IsMultiplicativeElementWithOne"],
+  x -> Julia.Base.isone(ForeignPointer(x))
+);
+
+InstallMethod( Zero,
+  ["IsAAGenericRingElem"],
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.zero(Julia.Generic.parent(ForeignPointer(x))))
+);
+
+InstallMethod( One,
+  ["IsAAGenericRingElem and IsMultiplicativeElementWithOne"],
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Generic.one(Julia.Generic.parent(ForeignPointer(x))))
+);
+
+InstallOtherMethod( Conductor,
+  ["IsForeignObject and IsCyclotomic and IsCyc"],
+    x -> Julia.GAPGroups._conductor(ForeignPointer(x))
+);
+
+# This is just copied from fldabnum.gi.
+# I had to replace the Conductor call by the Conductor method for lists in
+# cyclotom.gi because GAP directly calls C for IsCyclotomicCollection.
+InstallOtherMethod( FieldByGenerators,
+  [ "IsAAGenericRingElemCollection and IsCyclotomicCollection" ],
+  function( gens )
+    local N, stab, entry;
+    N := 1;
+    for entry in gens do
+      N := LcmInt( N, Conductor( entry ) );
+    od;
+
+    # Handle trivial cases.
+    if N = 1 then
+      return Rationals;
+    elif N = 4 then
+      return GaussianRationals;
+    fi;
+
+    # Compute the reduced stabilizer info.
+    stab := Filtered( PrimeResidues( N ),
+                   x -> ForAll( gens,
+                                gen -> GaloisCyc( gen, x ) = gen ) );
+
+    # Construct and return the field.
+    return AbelianNumberFieldByReducedGaloisStabilizerInfo( Rationals, N,
+             stab );
+  end
+);
+
+InstallTrueMethod( IsIntegralCyclotomic, IsForeignObject and IsCyclotomic and IsInt);
+
+InstallMethod( IsIntegralCyclotomic,
+  ["IsForeignObject and IsCyclotomic"],
+    x -> Julia.Hecke.isintegral(ForeignPointer(x))
+);
+
+InstallMethod( GaloisCyc,
+  ["IsForeignObject and IsCyc", "IsInt"],
+  function( x, k )
+    return Julia.GAPGroups.oscar_to_gap(Julia.GAPGroups._galois_cyc(ForeignPointer(x), k));
+  end
+);
+
+InstallMethod( Order,
+  ["IsForeignObject and IsCyc and IsCyclotomic"],
+  function( x )
+    local n;
+    n := Julia.GAPGroups._multiplicative_order(ForeignPointer(x));
+    if IsZero(n) then
+      return infinity;
+    fi;
+    return n;
+  end
+);
+
+# Can't add methods to AbsInt because its a global function
+#InstallGlobalFunction( AbsInt,
+#  ["IsForeignObject and IsRat"],
+#  x -> Julia.GAPGroups.oscar_to_gap(Julia.Hecke.abs(ForeignPointer(x)))
+#);
+
+InstallMethod( AbsoluteValue,
+  ["IsForeignObject and IsRat"],
+  x -> Julia.GAPGroups.oscar_to_gap(Julia.Hecke.abs(ForeignPointer(x)))
+);
+
+InstallMethod( \<,
+  ["IsForeignObject and IsRat", "IsInt"],
+  function( x, y )
+    return Julia.Base.\<(ForeignPointer(x), Julia.GAP.gap_to_julia(y));
+  end
+);
+
+InstallMethod( \<,
+  ["IsInt", "IsForeignObject and IsRat"],
+  function( x, y )
+    return Julia.Base.\<(Julia.GAP.gap_to_julia(x), ForeignPointer(y));
+  end
 );
 
 ################################################################################
@@ -55,7 +237,7 @@ InstallMethod( NumberRows,
 
 InstallOtherMethod( Length,
   ["IsAAGenericMatrixObj"],
-  x -> Julia.Nemo.nrows(ForeignPointer(x))
+  x -> Julia.Hecke.nrows(ForeignPointer(x))
 );
 
 InstallMethod( NumberColumns,
@@ -170,6 +352,24 @@ InstallMethod( NestingDepthM,
   x -> 2
 );
 
+InstallMethod( \*,
+  ["IsAAGenericMatrixObj and IsCyclotomicCollColl", "IsFFE"],
+  function( M, z )
+    local N;
+    N := Julia.GAPGroups._cyclotomic_to_gapint(ForeignPointer(M));
+    return N*z;
+  end
+);
+
+InstallMethod( \*,
+  ["IsFFE", "IsAAGenericMatrixObj and IsCyclotomicCollColl"],
+  function( z, M )
+    local N;
+    N := Julia.GAPGroups._cyclotomic_to_gapint(ForeignPointer(M));
+    return z*N;
+  end
+);
+
 ################################################################################
 #
 #  Matrix rows
@@ -186,6 +386,13 @@ InstallOtherMethod( \[\],
   end
 );
 
+InstallOtherMethod( \[\],
+  ["IsAAGenericMatrixRowObj", "IsPosInt"],
+  function( x, y )
+    return Julia.GAPGroups.oscar_to_gap(Julia.Base.getindex(ForeignPointer(x), 1, y));
+  end
+);
+
 InstallMethod( \=,
   ["IsAAGenericMatrixRowObj", "IsAAGenericMatrixRowObj"],
   function( x, y )
@@ -193,9 +400,9 @@ InstallMethod( \=,
   end
 );
 
-InstallMethod( Length,
+InstallOtherMethod( Length,
   ["IsAAGenericMatrixRowObj"],
-  x -> Julia.Nemo.ncols(ForeignPointer(x))
+  x -> Julia.Hecke.ncols(ForeignPointer(x))
 );
 
 InstallMethod( NestingDepthA,
@@ -206,4 +413,11 @@ InstallMethod( NestingDepthA,
 InstallMethod( NestingDepthM,
   ["IsAAGenericMatrixRowObj"],
   x -> 1
+);
+
+InstallMethod( \*,
+  ["IsAAGenericMatrixRowObj", "IsAAGenericMatrixObj"],
+  function( x, y )
+    return Julia.GAPGroups.oscar_matrix_row_to_gap(Julia.Base.\*(ForeignPointer(x), ForeignPointer(y)), 1);
+  end
 );

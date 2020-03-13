@@ -3,6 +3,7 @@ module GAPGroups
 
 using GAP
 using Nemo
+using Hecke
 
 import Base.==
 import Base.rand
