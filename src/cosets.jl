@@ -1,10 +1,12 @@
+export right_coset, left_coset, representative, elements, isbicoset, right_cosets, right_transversal, double_coset, acting_domain
+
 # T=type of the group, S=type of the element
 mutable struct GroupCoset{T<: Group, S <: GroupElem} 
-   X::T
-   H::T
-   repr::S
-   side::Symbol     # says if the coset is left or right
-   coset::GapObj
+   X::T                    # big group containing the subgroup and the element
+   H::T                    # subgroup
+   repr::S                 # element
+   side::Symbol            # says if the coset is left or right
+   coset::GapObj           # GapObj(H*repr)
 end
 
 function _group_coset(X::Group, H::Group, repr::GroupElem, side::Symbol, coset::GapObj)
@@ -28,7 +30,7 @@ function left_coset(H::Group, g::GroupElem)
 end
 
 function show(io::IO, x::GroupCoset)
-   if x.right == "right"
+   if x.side == :right
       print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.H.X))*" * "*GAP.gap_to_julia(GAP.Globals.StringView(x.repr.X)))
    else
       print(io, GAP.gap_to_julia(GAP.Globals.StringView(x.repr.X))*" * "*GAP.gap_to_julia(GAP.Globals.StringView(x.H.X)))
@@ -49,9 +51,8 @@ function elements(C::GroupCoset)
   return l
 end
 
-order(C::GroupCoset) = GAP.Globals.Size(C.coset)
 
-is_bicoset(C::GroupCoset) = GAP.Globals.IsBiCoset(C.coset)
+isbicoset(C::GroupCoset) = GAP.Globals.IsBiCoset(C.coset)
 
 function right_cosets(G::Group, H::Group)
   L = GAP.Globals.RightCosets(G.X, H.X)
@@ -67,6 +68,24 @@ function right_transversal(G::T, H::T) where T<: Group
    L = GAP.Globals.RightTransversal(G.X,H.X)
    l = Vector{elem_type(G)}(undef, length(L))
    return elem_type(G)[group_element(G, x) for x in GAP.gap_to_julia(L)]
+end
+
+
+function iterate(G::GroupCoset)
+  L=GAP.Globals.Iterator(G.coset)
+  if GAP.Globals.IsDoneIterator(L)
+    return nothing
+  end
+  i = GAP.Globals.NextIterator(L)
+  return group_element(G.X, i), L
+end
+
+function iterate(G::GroupCoset, state)
+  if GAP.Globals.IsDoneIterator(state)
+    return nothing
+  end
+  i = GAP.Globals.NextIterator(state)
+  return group_element(G.X, i), state
 end
 
 
@@ -88,7 +107,7 @@ function double_coset(G::Group, g::GroupElem, H::Group)
    if !GAP.Globals.IsSubset(parent(g).X,H.X)
       throw(ArgumentError("H is not a subgroup of parent(g)"))
    end
-   return GroupDoubleCoset(parent(g),G,H,g,GAP.Globals.DoubleCoset(G,g,H))
+   return GroupDoubleCoset(parent(g),G,H,g,GAP.Globals.DoubleCoset(G.X,g.X,H.X))
 end
 
 function elements(C::GroupDoubleCoset)
@@ -97,5 +116,23 @@ function elements(C::GroupDoubleCoset)
 end
 
 order(C::Union{GroupCoset,GroupDoubleCoset}) = GAP.Globals.Size(C.coset)
+Base.:length(C::Union{GroupCoset,GroupDoubleCoset}) = GAP.Globals.Size(C.coset)
 
 rand(C::Union{GroupCoset,GroupDoubleCoset}) = group_element(C.X, GAP.Globals.Random(C.coset))
+
+function iterate(G::GroupDoubleCoset)
+  L=GAP.Globals.Iterator(G.coset)
+  if GAP.Globals.IsDoneIterator(L)
+    return nothing
+  end
+  i = GAP.Globals.NextIterator(L)
+  return group_element(G.X, i), L
+end
+
+function iterate(G::GroupDoubleCoset, state)
+  if GAP.Globals.IsDoneIterator(state)
+    return nothing
+  end
+  i = GAP.Globals.NextIterator(state)
+  return group_element(G.X, i), state
+end

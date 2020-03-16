@@ -142,7 +142,7 @@ end
 
 function sub(G::T, elements::Vector{S}) where T <: Group where S <: GroupElem
   @assert elem_type(G) == S
-  elems_in_GAP = GAP.Globals.julia_to_gap(GapObj[x.X for x in elems])
+  elems_in_GAP = GAP.julia_to_gap(GapObj[x.X for x in elements])
   H = GAP.Globals.Group(elems_in_GAP)
   #H is the group. I need to return the inclusion map too
   return _as_subgroup(H, G)

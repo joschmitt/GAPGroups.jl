@@ -111,7 +111,7 @@ end
 
 Base.:exponent(x::Group) = GAP.Globals.Exponent(x.X)
 
-#Base.:length(x::Group) = order(x)
+Base.:length(x::Group) = order(x)
 
 function rand(x::Group)
    s = GAP.Globals.Random(x.X)
