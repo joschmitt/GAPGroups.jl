@@ -337,7 +337,7 @@ end
 # END elements conjugation 
 
 # START subgroups conjugation
-function conjugacy_class(G::Group, g::Group)
+function conjugacy_class(G::T, g::T) where T<:Group
    return _conjugacy_class{typeof(G), typeof(g)}(G, g, GAP.Globals.ConjugacyClassSubgroups(G.X,g.X))
 end
 

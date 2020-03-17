@@ -161,7 +161,7 @@ end
 #
 ###############################################################################
 
-function index(G::Group, H::Group)
+function index(G::T, H::T) where T <: Group
   i = GAP.Globals.Index(G.X, H.X)
   return GAP.gap_to_julia(i)
 end
@@ -172,7 +172,7 @@ end
 #
 ###############################################################################
 
-function normal_subgroups(G::T) where T <: Group
+function normal_subgroups(G::Group)
   nsubs = GAP.gap_to_julia(GAP.Globals.NormalSubgroups(G.X))
   res = Vector{Tuple{typeof(G), GAPGroupHomomorphism{typeof(G), typeof(G)}}}(undef, length(nsubs))
   for i = 1:length(res)
@@ -182,7 +182,7 @@ function normal_subgroups(G::T) where T <: Group
   return res
 end
 
-function subgroups(G::T) where T <: Group
+function subgroups(G::Group)
   subs = GAP.gap_to_julia(GAP.Globals.AllSubgroups(G.X))
   res = Vector{Tuple{typeof(G), GAPGroupHomomorphism{typeof(G), typeof(G)}}}(undef, length(subs))
   for i = 1:length(res)
