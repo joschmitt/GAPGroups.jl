@@ -13,7 +13,8 @@ import Base.eltype
 import Base.iterate
 import Base.collect
 
-export symmetric_group, order, perm, cperm, isfinite, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right,      div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm, degree, elements, right_coset, coset_decomposition,
+export symmetric_group, order, perm, cperm, isfinite, gens, ngens, comm, comm!, inv!, rand_pseudo, one!, div_right,
+div_left, div_right!, div_left!, elem_type, deg, mul, mul!, listperm, degree, elements, right_coset, coset_decomposition,
 right_cosets , right_transversal, conjugacy_class
      #conj!, conj
 
@@ -89,6 +90,10 @@ function Base.isfinite(G::PermGroup)
   return true
 end
 
+function Base.isfinite(G::PcGroup)
+  return true
+end
+
 function Base.isfinite(G::Group)
   return GAP.Globals.IsFinite(G.X)
 end
@@ -135,7 +140,7 @@ function _maxgroup(x::T, y::T) where T <: Group
 end
 
 #We need a lattice of groups to implement this properly
-function _prod(x::GroupElem, y::GroupElem)
+function _prod(x::T, y::T) where T <: GroupElem
   G = _maxgroup(parent(x), parent(y))
   return group_element(G, x.X*y.X)
 end
@@ -146,7 +151,7 @@ function ==(x::Group, y::Group)
    return x.X == y.X
 end
 
-function ==(x::GroupElem, y::GroupElem)
+function ==(x::T, y::T) where T <: GroupElem
    return x.X == y.X
 end
 
