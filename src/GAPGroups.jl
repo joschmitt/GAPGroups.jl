@@ -268,9 +268,7 @@ function (G::PermGroup)(x::PermGroupElem)
    if !GAP.Globals.IN(x.X,G.X)
       throw(ArgumentError("the element does not embed in the group"))
    end
-   x1 = deepcopy(x)
-   x1.parent = G
-   return x1
+   return group_element(G, x.X)
 end
 
 #evaluation function
